@@ -175,7 +175,8 @@
 
   /* ---------------- Arranque ---------------- */
   BS.listo = (function () {
-    if (location.protocol === "file:" || params.get("demo") === "1") { iniciarDemo(); return Promise.resolve(); }
+    // Sin servidor posible (archivo local o GitHub Pages) o demo pedida: arranca la demo directo
+    if (location.protocol === "file:" || /\.github\.io$/.test(location.hostname) || params.get("demo") === "1") { iniciarDemo(); return Promise.resolve(); }
     if (pagina === "reserva" && !params.get("b")) { iniciarDemo(); return Promise.resolve(); }
     return fetch(API + "salud", { cache: "no-store" }).then(function (r) {
       if (!r.ok) throw new Error("sin servidor");
