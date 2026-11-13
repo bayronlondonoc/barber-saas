@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Reservá tu turno · Barber SaaS</title>
+  <meta name="description" content="Reservá tu turno en la barbería o hacé fila virtual desde tu casa. Sin descargar nada.">
+  <meta name="theme-color" content="#0c0b0b">
+  <link rel="icon" href="../assets/img/favicon.svg?v=20261109" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="../assets/css/base.css?v=202611101">
+  <link rel="stylesheet" href="../assets/css/reserva.css?v=202611101">
+  <script defer src="../assets/js/store.js?v=202611101"></script>
+  <script defer src="../assets/js/engine.js?v=202611101"></script>
+  <script defer src="../assets/js/conexion.js?v=202611101"></script>
+  <script defer src="../assets/js/reserva.js?v=202611132"></script>
+</head>
+<body class="reserva" data-pagina="reserva">
+  <div class="rs-fondo" aria-hidden="true"></div>
+  <div class="rs-shell">
+    <header class="rs-marca" data-marca>
+      <div class="rs-marca-top">
+        <span class="rs-sello"><span class="poste is-on"></span></span>
+        <span class="eyebrow" data-estado-local>Barbería en Medellín</span>
+      </div>
+      <h1 class="rs-nombre" data-nombre>Tu barbería</h1>
+      <p class="rs-lugar" data-lugar>Medellín</p>
+      <div class="rs-datos" data-datos></div>
+      <p class="rs-powered">Reservas con <a href="../index.html"><b>Barber</b> SaaS</a></p>
+    </header>
+
+    <main class="rs-card" id="contenido">
+      <div class="rs-tabs" role="tablist" aria-label="Cómo querés venir">
+        <button role="tab" class="rs-tab is-on" aria-selected="true" data-modo="cita">Reservar cita</button>
+        <button role="tab" class="rs-tab" aria-selected="false" data-modo="fila">Fila virtual <small data-fila-n></small></button>
+      </div>
+      <div data-rs-cuerpo>
+        <p class="sub" style="padding:20px 0">Cargando turnos…</p>
+        <noscript><p>Para reservar necesitás JavaScript activado.</p></noscript>
+      </div>
+    </main>
+  </div>
+  <div class="capa-rs" data-capa hidden></div>
+  <div class="toasts" data-toasts aria-live="polite"></div>
+</body>
+</html>

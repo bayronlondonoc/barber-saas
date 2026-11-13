@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Entrar · Barber SaaS</title>
+  <meta name="description" content="Entrá a tu barbería o creala en un minuto.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0c0b0b">
+  <link rel="icon" href="../assets/img/favicon.svg?v=20261109" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="../assets/css/base.css?v=202611101">
+  <link rel="stylesheet" href="../assets/css/reserva.css?v=202611101">
+  <script defer src="../assets/js/store.js?v=202611101"></script>
+  <script defer src="../assets/js/conexion.js?v=202611101"></script>
+  <script defer src="../assets/js/entrar.js?v=202611101"></script>
+</head>
+<body class="reserva" data-pagina="entrar">
+  <div class="rs-fondo" aria-hidden="true"></div>
+  <div class="rs-shell">
+    <header class="rs-marca">
+      <a class="logo" href="../index.html" style="font-size:24px">
+        <span class="logo-mark" style="width:44px;height:44px;border-radius:13px"><span class="poste is-on" style="width:14px;height:30px"></span></span>
+        <span><b>Barber</b><span>SaaS</span></span>
+      </a>
+      <h1 class="rs-nombre" style="max-width:12ch">Vos cortás. <span style="color:var(--neon)">El resto va solo.</span></h1>
+      <p class="rs-lugar">Agenda, WhatsApp, fila virtual, anticipos y liquidación de barberos en un solo lugar.</p>
+      <p class="rs-powered">¿Solo querés mirar? <a href="index.html?demo=1"><b>Abrí la demo</b></a> con datos de ejemplo.</p>
+    </header>
+
+    <main class="rs-card" id="contenido">
+      <div class="rs-tabs" role="tablist" aria-label="Entrar o crear cuenta">
+        <button role="tab" class="rs-tab is-on" aria-selected="true" data-tab="entrar">Entrar</button>
+        <button role="tab" class="rs-tab" aria-selected="false" data-tab="registro">Crear mi barbería</button>
+      </div>
+      <div data-aviso hidden class="rs-error" style="padding:4px 2px 14px"></div>
+
+      <form class="rs-form" data-form="entrar" novalidate>
+        <div class="rs-campo"><label for="e-email">Correo</label><input class="rs-input" id="e-email" name="email" type="email" autocomplete="email" required></div>
+        <div class="rs-campo"><label for="e-clave">Contraseña</label><input class="rs-input" id="e-clave" name="clave" type="password" autocomplete="current-password" required></div>
+        <button class="btn btn--lg rs-cta" type="submit">Entrar a mi barbería</button>
+      </form>
+
+      <form class="rs-form" data-form="registro" novalidate hidden>
+        <div class="rs-campo"><label for="r-barberia">Nombre de la barbería</label><input class="rs-input" id="r-barberia" name="barberia" required maxlength="60" placeholder="La Esquina Barber Club"></div>
+        <div class="rs-campo"><label for="r-barrio">Barrio o municipio</label>
+          <select class="rs-input" id="r-barrio" name="barrio">
+            <option>Laureles</option><option>El Poblado</option><option>Belén</option><option>Envigado</option><option>Robledo</option><option>Bello</option><option>Itagüí</option><option>Sabaneta</option><option>Manrique</option><option>Castilla</option><option>La América</option><option>Buenos Aires</option><option>Aranjuez</option><option>La Estrella</option><option>Otro</option>
+          </select>
+        </div>
+        <div class="rs-campo"><label for="r-nombre">Tu nombre</label><input class="rs-input" id="r-nombre" name="nombre" autocomplete="name" required maxlength="40"></div>
+        <div class="rs-campo"><label for="r-wa">Tu WhatsApp (opcional)</label><div class="rs-tel"><span>+57</span><input class="rs-input" id="r-wa" name="whatsapp" inputmode="numeric" maxlength="12" placeholder="300 123 4567"></div></div>
+        <div class="rs-campo"><label for="r-email">Correo</label><input class="rs-input" id="r-email" name="email" type="email" autocomplete="email" required></div>
+        <div class="rs-campo"><label for="r-clave">Contraseña (mínimo 8 caracteres)</label><input class="rs-input" id="r-clave" name="clave" type="password" autocomplete="new-password" minlength="8" required></div>
+        <label class="rs-check"><input type="checkbox" name="ejemplo"><span>Cargar datos de ejemplo para probar (citas, clientes y fila de muestra). Los podés borrar después.</span></label>
+        <label class="rs-check"><input type="checkbox" name="acepto" required><span>Acepto el tratamiento de mis datos y los de mis clientes para operar la barbería (Ley 1581 de 2012).</span></label>
+        <button class="btn btn--lg rs-cta" type="submit">Crear mi barbería</button>
+      </form>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Panel · Barber SaaS</title>
+  <meta name="description" content="Panel de Barber SaaS: agenda, fila virtual, automatizaciones, clientes y caja de tu barbería.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#0c0b0b">
+  <link rel="icon" href="../assets/img/favicon.svg?v=20261109" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="../assets/css/base.css?v=202611101">
+  <link rel="stylesheet" href="../assets/css/app.css?v=202611101">
+  <script defer src="../assets/js/store.js?v=202611101"></script>
+  <script defer src="../assets/js/engine.js?v=202611101"></script>
+  <script defer src="../assets/js/asistente-core.js?v=202611131"></script>
+  <script defer src="../assets/js/conexion.js?v=202611101"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" integrity="sha384-mZT2gIty7ZDdOGkxfP6joZcYdMW1Jvj9dRlfpTmaJAKKXTqzygtB22k7FLe+KZC1" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script defer src="../assets/js/app.js?v=202611134"></script>
+  <script defer src="../assets/js/app-bot.js?v=202611131"></script>
+</head>
+<body class="app" data-pagina="panel">
+  <a class="saltar" href="#vista">Saltar al contenido</a>
+
+  <div class="app-shell">
+    <aside class="lateral" aria-label="Menú principal">
+      <a class="logo" href="../index.html" title="Volver a la página de Barber SaaS">
+        <span class="logo-mark"><span class="poste"></span></span>
+        <span><b>Barber</b><span>SaaS</span></span>
+      </a>
+      <div class="lat-shop" data-shop-card>
+        <span class="lat-shop-ico"><span class="poste is-on"></span></span>
+        <span class="lat-shop-txt"><b data-shop-nombre>Tu barbería</b><small data-shop-barrio>Medellín</small></span>
+      </div>
+      <nav class="lat-nav" data-nav></nav>
+      <div class="lat-pie">
+        <button class="lat-asistente" type="button" data-accion="ir" data-ruta="asistente">
+          <span class="lat-asistente-ico"><span class="poste is-on"></span></span>
+          <span><b>Probá tu asistente</b><small>Escribile como si fueras un cliente</small></span>
+        </button>
+        <div class="lat-perfil">
+          <span class="avatar avatar--sm" data-dueno-ini>AN</span>
+          <span><b data-dueno-nombre>Andrés</b><small data-perfil-sub>Dueño</small></span>
+        </div>
+      </div>
+    </aside>
+
+    <div class="principal">
+      <header class="barra">
+        <button class="barra-menu" type="button" data-accion="ir" data-ruta="mas" aria-label="Más opciones"><span class="logo-mark"><span class="poste"></span></span></button>
+        <div class="barra-titulo">
+          <h1 data-titulo>Hoy</h1>
+          <p data-subtitulo></p>
+        </div>
+        <div class="barra-acciones">
+          <span class="estado estado--alerta" data-estado-conexion hidden></span>
+          <button class="vivo" type="button" data-accion="toggle-vivo" aria-pressed="true" title="Simula clientes reales escribiendo, reservando y llegando a la fila">
+            <span class="vivo-punto"></span><span class="vivo-txt">Demo en vivo</span>
+          </button>
+          <a class="btn btn--suave btn--sm barra-reservas" href="../reserva/index.html" target="_blank" rel="noopener" data-link-reservas>Página de reservas</a>
+          <button class="btn btn--sm" type="button" data-accion="nueva-cita">Nueva cita</button>
+        </div>
+      </header>
+      <main class="vista" id="vista" tabindex="-1">
+        <div class="cargando"><span class="poste is-on"></span>Cargando tu barbería…</div>
+        <noscript><p class="sin-js">La plataforma necesita JavaScript activado para funcionar.</p></noscript>
+      </main>
+    </div>
+  </div>
+
+  <nav class="tabbar" data-tabbar aria-label="Menú"></nav>
+  <div class="capa" data-capa hidden></div>
+  <div class="toasts" data-toasts aria-live="polite"></div>
+</body>
+</html>

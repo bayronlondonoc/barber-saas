@@ -1,0 +1,13 @@
+{
+  "name": "barber-saas",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Plataforma de automatización para barberías: agenda, WhatsApp, fila virtual, anticipos y liquidación de barberos.",
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node server/index.js",
+    "plantillas": "node server/plantillas.js",
+    "plantillas:crear": "node server/plantillas.js --crear",
+    "respaldo": "node server/respaldo.js"
+  }
+}

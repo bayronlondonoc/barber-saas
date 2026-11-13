@@ -1,0 +1,64 @@
+{
+  "project": "Barber SaaS",
+  "path": "SAAS Barberia",
+  "industry": "SaaS B2B · automatización para barberías (Medellín)",
+  "built_date": "2026-11-09",
+  "archetype": "05 Mouse Gradient (adaptado: luz neón que sigue el mouse sobre negro navaja)",
+  "ui_style": "Dark Mode + Glass UI, con el producto como protagonista",
+  "palette_family": "Dark warm + rojo neón de poste de barbero",
+  "typography_pairing": "Bricolage Grotesque + Inter + JetBrains Mono",
+  "signature_effect": "El poste: rayas diagonales animadas en logo, barras de progreso y automatizaciones corriendo",
+  "hero_topology": "Split: titular light/bold + teléfono con chat de WhatsApp que se escribe solo y notificaciones que salen de él",
+  "wow_recipe": "R3 — Moderno Cinético (ambición media, 4 efectos)",
+  "sections": {
+    "hero": "H4",
+    "intro": "I1",
+    "rooms": "R7",
+    "experiences": "E6",
+    "trust": "ninguna (tabla de comparación propia, sin testimonios inventados)",
+    "location": "ninguna",
+    "faq": "F1",
+    "cta": "C3",
+    "footer": "FT1"
+  },
+  "typo_signature": "TY3",
+  "signature_moment": "M4",
+  "copy_phrases_used": [
+    "Vos cortás. La barbería se maneja sola.",
+    "Cada semana se te va plata por donde no estás mirando.",
+    "Las prendés una vez. Trabajan todos los días.",
+    "Así trabaja Barber SaaS mientras vos cortás.",
+    "Una agenda te dice quién viene. Barber SaaS hace que venga.",
+    "La plata entra antes de que se siente en la silla."
+  ],
+  "effects": [
+    "Luz neón que sigue el mouse en el hero",
+    "Marquee de barrios con velocidad y dirección según el scroll",
+    "Escena clavada con scroll horizontal: un sábado de 7 a. m. a 9 p. m.",
+    "Micro-interacciones: chat que se escribe solo, tabs con barra de poste, teléfono que se inclina"
+  ],
+  "assets": "Sin fotos: todo es interfaz del producto hecha en HTML/CSS (vistas ilustrativas con datos de ejemplo)",
+  "palette": {
+    "--negro": "#0c0b0b",
+    "--carbon": "#141313",
+    "--grafito": "#1c1a1a",
+    "--espuma": "#f5f1ea",
+    "--humo": "#a8a29e",
+    "--tinta": "#141212",
+    "--neon": "#ff4b2b",
+    "--neon-tinta": "#c42d0e",
+    "--ok": "#3ddc97",
+    "--alerta": "#ffb547",
+    "--error": "#ff5a4e"
+  },
+  "pages": {
+    "/": "Landing de venta",
+    "/app/": "Plataforma del dueño: Hoy, Agenda, Fila virtual, Automatizaciones, Asistente WhatsApp, Clientes, Caja, Ajustes",
+    "/reserva/": "Página pública del cliente: reservar cita o hacer fila virtual"
+  },
+  "simulado_en_esta_version": [
+    "Envío de WhatsApp (se registra en la actividad; en producción: API de WhatsApp Business)",
+    "Pagos Bre-B, Nequi, PSE (pantalla de pago simulada; en producción: pasarela de pagos)",
+    "Base de datos (localStorage del navegador; en producción: backend con login)"
+  ]
+}

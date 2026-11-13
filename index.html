@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Barber SaaS · La barbería se maneja sola</title>
+  <meta name="description" content="Agenda por WhatsApp a cualquier hora, fila virtual, anticipos con Nequi y Bre-B y liquidación de barberos. La plataforma de automatización hecha para las barberías de Medellín.">
+  <meta name="theme-color" content="#0c0b0b">
+  <meta property="og:title" content="Barber SaaS · La barbería se maneja sola">
+  <meta property="og:description" content="Vos cortás. Barber SaaS agenda, recuerda, cobra el anticipo y llena las sillas vacías.">
+  <meta property="og:type" content="website">
+  <script>document.documentElement.classList.add("js");setTimeout(function(){if(!window.__BS_LANDING__)document.documentElement.classList.remove("js")},3000);</script>
+  <link rel="icon" href="assets/img/favicon.svg?v=20261109" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="assets/css/base.css?v=202611101">
+  <link rel="stylesheet" href="assets/css/landing.css?v=20261109">
+  <script defer src="assets/js/landing.js?v=20261109"></script>
+</head>
+<body class="landing">
+
+<!-- Íconos (sprite) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-flecha" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></symbol>
+  <symbol id="i-rayo" viewBox="0 0 24 24"><path d="M13 2.5L4.5 14H11l-1 7.5L19.5 10H13z"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M20.5 11.5a8.5 8.5 0 0 1-12.6 7.4L3.5 20.5l1.6-4.2A8.5 8.5 0 1 1 20.5 11.5z"/></symbol>
+  <symbol id="i-escudo" viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.5-3.2 8.2-7.5 9.5-4.3-1.3-7.5-5-7.5-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/></symbol>
+  <symbol id="i-fila" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.8a3.3 3.3 0 0 1 0 6.4M18.5 14.8c1.7.7 2.7 2.4 3 5.2"/></symbol>
+  <symbol id="i-ciclo" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 3.5V8h4.5"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 20.5V16h-4.5"/></symbol>
+  <symbol id="i-hueco" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4M12 13v5M9.5 15.5h5"/></symbol>
+  <symbol id="i-plata" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.8"/><path d="M6 9.5v5M18 9.5v5"/></symbol>
+  <symbol id="i-estrella" viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z"/></symbol>
+  <symbol id="i-sol" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/></symbol>
+  <symbol id="i-tijeras" viewBox="0 0 24 24"><circle cx="6" cy="6.5" r="3"/><circle cx="6" cy="17.5" r="3"/><path d="M8.6 8.1L20 18M8.6 15.9L20 6"/></symbol>
+  <symbol id="i-dobles" viewBox="0 0 24 24"><path d="M2.5 12.5l4 4L14.5 8.5M11 16l.5.5L20 8"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1.2"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="1.2"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="1.2"/><path d="M14 14h2.5v2.5H14zM18 18h2.5v2.5H18zM14 18.5v2M18.5 14h2"/></symbol>
+  <symbol id="i-entrar" viewBox="0 0 24 24"><path d="M14 4h4.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H14"/><path d="M4 12h11M11 8l4 4-4 4"/></symbol>
+  <symbol id="i-mas" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+</svg>
+
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+
+<!-- ===================== NAV ===================== -->
+<header class="nav" data-nav>
+  <div class="nav-in">
+    <a class="logo" href="#top" aria-label="Barber SaaS, inicio">
+      <span class="logo-mark"><span class="poste"></span></span>
+      <span><b>Barber</b><span>SaaS</span></span>
+    </a>
+    <nav class="nav-links" aria-label="Secciones">
+      <a href="#automatizaciones">Automatizaciones</a>
+      <a href="#sabado">Un sábado</a>
+      <a href="#cobros">Cobros</a>
+      <a href="#precios">Precios</a>
+      <a href="#preguntas">Preguntas</a>
+    </nav>
+    <div class="nav-cta">
+      <a class="btn btn--ghost btn--sm nav-entrar" href="app/index.html">Entrar</a>
+      <a class="btn btn--sm" href="app/index.html?nuevo=1">Probar gratis <svg class="ic flecha"><use href="#i-flecha"/></svg></a>
+      <button class="nav-burger" type="button" aria-label="Abrir menú" aria-expanded="false" data-burger><svg class="ic"><use href="#i-menu"/></svg></button>
+    </div>
+  </div>
+  <div class="nav-movil" data-menu hidden>
+    <a href="#automatizaciones">Automatizaciones</a>
+    <a href="#sabado">Un sábado</a>
+    <a href="#cobros">Cobros</a>
+    <a href="#precios">Precios</a>
+    <a href="#preguntas">Preguntas</a>
+    <a href="app/index.html" class="nav-movil-entrar">Entrar al panel</a>
+    <a href="app/index.html?nuevo=1" class="btn btn--lg nav-movil-cta">Probar 14 días gratis</a>
+  </div>
+</header>
+
+<main id="contenido">
+
+  <!-- ===================== HERO ===================== -->
+  <section class="hero" id="top" data-hero>
+    <div class="hero-fondo" aria-hidden="true"><div class="hero-rayas"></div><div class="hero-luz" data-luz></div></div>
+    <div class="contenedor hero-grid">
+      <div class="hero-texto">
+        <p class="eyebrow"><span class="punto"></span>Hecho en Medellín · Solo para barberías</p>
+        <h1 class="titular hero-titulo"><span class="ligero">Vos cortás.</span> <strong>La barbería se maneja <em class="neon-txt">sola.</em></strong></h1>
+        <p class="hero-sub">Barber SaaS contesta tu WhatsApp, agenda, cobra el anticipo con Nequi o Bre-B, organiza a los que llegan sin cita y le saca la cuenta a cada barbero. Todo en automático, desde el celular.</p>
+        <div class="hero-acciones">
+          <a class="btn btn--lg" href="app/index.html?nuevo=1">Probar 14 días gratis <svg class="ic flecha"><use href="#i-flecha"/></svg></a>
+          <a class="enlace-flecha" href="reserva/index.html">Ver cómo reserva un cliente <svg class="ic"><use href="#i-flecha"/></svg></a>
+        </div>
+        <dl class="hero-datos">
+          <div><dt>24/7</dt><dd>tu WhatsApp responde y agenda solo</dd></div>
+          <div><dt>0 apps</dt><dd>tus clientes no descargan nada</dd></div>
+          <div><dt>1 tarde</dt><dd>para dejar tu barbería andando</dd></div>
+        </dl>
+      </div>
+
+      <div class="hero-visual">
+        <div class="telefono hero-tel">
+          <div class="telefono-pantalla">
+            <div class="telefono-isla"></div>
+            <div class="telefono-barra"><span>11:47</span><span class="mono">●●● 5G</span></div>
+            <div class="chat hero-chat" data-chat>
+              <div class="chat-head">
+                <span class="chat-avatar"><span class="poste is-on"></span></span>
+                <span><b>La Esquina Barber Club</b><small>Asistente automático · en línea</small></span>
+              </div>
+              <div class="chat-body" data-chat-body>
+                <span class="msg-dia">Hoy</span>
+                <div class="msg msg--out" data-paso="1">Qué más parce, ¿hay turno mañana tipo 4? Corte y barba<span class="msg-meta">11:46 p. m. <svg class="ic"><use href="#i-dobles"/></svg></span></div>
+                <div class="msg msg--in" data-paso="2"><span class="msg-auto"><svg class="ic"><use href="#i-rayo"/></svg>Automático</span>¡Quiubo, Camilo! 💈 Mañana con Juan tengo <b>4:00</b> o <b>4:40 p. m.</b> ¿Cuál te guardo?<span class="msg-meta">11:46 p. m.</span></div>
+                <div class="msg msg--out" data-paso="3">La de las 4 de una 🙌<span class="msg-meta">11:47 p. m. <svg class="ic"><use href="#i-dobles"/></svg></span></div>
+                <div class="msg msg--in" data-paso="4">Listo ✅ Corte + barba, mañana 4:00 p. m. con Juan. Para separarlo, el anticipo es de $10.000.<span class="msg-boton">Pagar con Nequi o Bre-B</span><span class="msg-meta">11:47 p. m.</span></div>
+                <span class="msg-pago" data-paso="5"><svg class="ic"><use href="#i-check"/></svg>Anticipo recibido · $10.000 · Bre-B</span>
+                <div class="msg msg--in" data-paso="6">Quedaste agendado 🔥 Mañana a las 2:00 p. m. te recuerdo. Si te sale algo, respondé CAMBIAR.<span class="msg-meta">11:47 p. m.</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flota flota--a" data-flota="4">
+          <span class="flota-ico"><svg class="ic"><use href="#i-cal"/></svg></span>
+          <span><small>Nueva cita en tu agenda</small><b>Juan · mañana 4:00 p. m.</b></span>
+        </div>
+        <div class="flota flota--b" data-flota="2">
+          <span class="flota-ico flota-ico--rayo"><svg class="ic"><use href="#i-rayo"/></svg></span>
+          <span><small>Respondió en 3 segundos</small><b>A las 11:46 p. m., mientras dormías</b></span>
+        </div>
+        <div class="flota flota--c" data-flota="5">
+          <span class="flota-ico flota-ico--ok"><svg class="ic"><use href="#i-plata"/></svg></span>
+          <span><small>Anticipo · Bre-B</small><b class="num">+$10.000</b></span>
+        </div>
+        <p class="nota-ejemplo">Vista ilustrativa · Datos de ejemplo</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== BARRIOS (marquee) ===================== -->
+  <div class="barrios" aria-label="Hecho para las barberías de Medellín y el Valle de Aburrá">
+    <div class="barrios-pista" data-marquee>
+      <div class="barrios-grupo">
+        <span class="barrios-intro">Hecho para las barberías de</span>
+        <span>Laureles</span><i></i><span>Belén</span><i></i><span>Envigado</span><i></i><span>Robledo</span><i></i><span>Manrique</span><i></i><span>Bello</span><i></i><span>Itagüí</span><i></i><span>Sabaneta</span><i></i><span>El Poblado</span><i></i><span>Castilla</span><i></i><span>La América</span><i></i><span>Buenos Aires</span><i></i><span>Aranjuez</span><i></i><span>La Estrella</span><i></i>
+      </div>
+      <div class="barrios-grupo" aria-hidden="true">
+        <span class="barrios-intro">Hecho para las barberías de</span>
+        <span>Laureles</span><i></i><span>Belén</span><i></i><span>Envigado</span><i></i><span>Robledo</span><i></i><span>Manrique</span><i></i><span>Bello</span><i></i><span>Itagüí</span><i></i><span>Sabaneta</span><i></i><span>El Poblado</span><i></i><span>Castilla</span><i></i><span>La América</span><i></i><span>Buenos Aires</span><i></i><span>Aranjuez</span><i></i><span>La Estrella</span><i></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== DOLOR ===================== -->
+  <section class="dolor" id="dolor">
+    <div class="contenedor">
+      <div class="sec-cabeza">
+        <p class="eyebrow">La semana de una barbería</p>
+        <h2 class="titular sec-titulo" data-reveal><span class="ligero">Cada semana se te va plata</span> <strong>por donde no estás mirando.</strong></h2>
+      </div>
+      <ol class="dolor-lista">
+        <li class="dolor-item" data-reveal>
+          <span class="dolor-hora mono">Viernes · 11:47 p. m.</span>
+          <h3>Te escribieron tarde.</h3>
+          <p>Querían turno para mañana. Nadie contestó y a las 8 de la mañana ya estaban sentados en otra barbería.</p>
+        </li>
+        <li class="dolor-item" data-reveal>
+          <span class="dolor-hora mono">Sábado · 3:00 p. m.</span>
+          <h3>Reservó y no llegó.</h3>
+          <p>La silla quedó vacía una hora, justo en la hora más pedida de la semana.</p>
+        </li>
+        <li class="dolor-item" data-reveal>
+          <span class="dolor-hora mono">Martes · 2:00 p. m.</span>
+          <h3>Tres sillas libres.</h3>
+          <p>Y ninguno de tus clientes sabía que había espacio. La tarde se fue en celular.</p>
+        </li>
+        <li class="dolor-item" data-reveal>
+          <span class="dolor-hora mono">Domingo · 9:00 p. m.</span>
+          <h3>Cuentas en el cuaderno.</h3>
+          <p>Sumando servicios, propinas y el porcentaje de cada barbero, a mano y con el sueño encima.</p>
+        </li>
+      </ol>
+      <p class="dolor-cierre" data-reveal>Barber SaaS convierte cada uno de esos momentos en una <strong>automatización que trabaja sola</strong>.</p>
+    </div>
+  </section>
+
+  <!-- ===================== AUTOMATIZACIONES (tabs) ===================== -->
+  <section class="auto claro" id="automatizaciones">
+    <div class="contenedor">
+      <div class="sec-cabeza sec-cabeza--split">
+        <div>
+          <p class="eyebrow">01 · Automatizaciones</p>
+          <h2 class="titular sec-titulo" data-reveal><span class="ligero">Las prendés una vez.</span> <strong>Trabajan todos los días.</strong></h2>
+        </div>
+        <p class="sec-intro" data-reveal>Recetas pensadas para barbería. Cada una dice cuándo se activa, qué hace y cuánta plata te devolvió en la semana.</p>
+      </div>
+
+      <div class="auto-grid" data-tabs>
+        <div class="auto-tabs" role="tablist" aria-label="Automatizaciones">
+          <button class="auto-tab is-activa" role="tab" id="tab-agenda" aria-controls="panel-agenda" aria-selected="true" data-tab="agenda">
+            <span class="auto-tab-ico"><svg class="ic"><use href="#i-chat"/></svg></span>
+            <span><b>Agenda por WhatsApp</b><small>Responde y agenda a cualquier hora.</small></span>
+            <span class="auto-tab-barra poste" aria-hidden="true"></span>
+          </button>
+          <button class="auto-tab" role="tab" id="tab-planton" aria-controls="panel-planton" aria-selected="false" tabindex="-1" data-tab="planton">
+            <span class="auto-tab-ico"><svg class="ic"><use href="#i-escudo"/></svg></span>
+            <span><b>Anti-plantón</b><small>Anticipo, recordatorio y turno liberado.</small></span>
+            <span class="auto-tab-barra poste" aria-hidden="true"></span>
+          </button>
+          <button class="auto-tab" role="tab" id="tab-fila" aria-controls="panel-fila" aria-selected="false" tabindex="-1" data-tab="fila">
+            <span class="auto-tab-ico"><svg class="ic"><use href="#i-fila"/></svg></span>
+            <span><b>Fila virtual</b><small>Los que llegan sin cita esperan desde la casa.</small></span>
+            <span class="auto-tab-barra poste" aria-hidden="true"></span>
+          </button>
+          <button class="auto-tab" role="tab" id="tab-ciclo" aria-controls="panel-ciclo" aria-selected="false" tabindex="-1" data-tab="ciclo">
+            <span class="auto-tab-ico"><svg class="ic"><use href="#i-ciclo"/></svg></span>
+            <span><b>Ciclo de corte</b><small>Le escribe a cada cliente cuando ya le toca.</small></span>
+            <span class="auto-tab-barra poste" aria-hidden="true"></span>
+          </button>
+          <button class="auto-tab" role="tab" id="tab-huecos" aria-controls="panel-huecos" aria-selected="false" tabindex="-1" data-tab="huecos">
+            <span class="auto-tab-ico"><svg class="ic"><use href="#i-hueco"/></svg></span>
+            <span><b>Huecos libres</b><small>Llena las horas muertas de la tarde.</small></span>
+            <span class="auto-tab-barra poste" aria-hidden="true"></span>
+          </button>
+          <button class="auto-tab" role="tab" id="tab-liquida" aria-controls="panel-liquida" aria-selected="false" tabindex="-1" data-tab="liquida">
+            <span class="auto-tab-ico"><svg class="ic"><use href="#i-plata"/></svg></span>
+            <span><b>Liquidación</b><small>La cuenta de cada barbero, hecha sola.</small></span>
+            <span class="auto-tab-barra poste" aria-hidden="true"></span>
+          </button>
+        </div>
+
+        <div class="auto-paneles">
+          <!-- 1. Agenda por WhatsApp -->
+          <div class="auto-panel is-activo" role="tabpanel" id="panel-agenda" aria-labelledby="tab-agenda" data-panel="agenda">
+            <ol class="receta">
+              <li><span class="receta-k">Cuando</span><p>Un cliente le escribe a tu WhatsApp, a la hora que sea.</p></li>
+              <li><span class="receta-k">Entonces</span><p>El asistente le muestra los turnos libres, agenda y le cobra el anticipo.</p></li>
+              <li><span class="receta-k">Resultado</span><p>La cita aparece en tu agenda y vos no tocaste el celular.</p></li>
+            </ol>
+            <div class="demo demo-agenda">
+              <div class="demo-chat">
+                <div class="msg msg--out">¿Tienen turno hoy en la tarde?</div>
+                <div class="msg msg--in"><span class="msg-auto"><svg class="ic"><use href="#i-rayo"/></svg>Automático</span>Claro 🙌 Hoy tengo 3:20, 4:00 y 5:40 p. m. con Kevin. ¿Te sirve alguno?</div>
+              </div>
+              <div class="demo-cita">
+                <span class="demo-cita-hora mono">3:20 p. m.</span>
+                <span class="demo-cita-cuerpo"><b>Santiago G.</b><small>Corte · con Kevin · por WhatsApp</small></span>
+                <span class="estado estado--ok"><svg class="ic"><use href="#i-check"/></svg>Confirmada</span>
+              </div>
+            </div>
+            <p class="auto-plata"><svg class="ic"><use href="#i-plata"/></svg>Esta semana: <b>23 citas agendadas fuera de horario</b> <span class="nota-ejemplo nota-ejemplo--inline">Datos de ejemplo</span></p>
+          </div>
+
+          <!-- 2. Anti-plantón -->
+          <div class="auto-panel" role="tabpanel" id="panel-planton" aria-labelledby="tab-planton" data-panel="planton" hidden>
+            <ol class="receta">
+              <li><span class="receta-k">Cuando</span><p>Faltan 24 horas y 2 horas para la cita.</p></li>
+              <li><span class="receta-k">Entonces</span><p>Le llega un recordatorio con botón para confirmar. Si no confirma 3 horas antes, el turno se libera para otro.</p></li>
+              <li><span class="receta-k">Resultado</span><p>Y si igual no llega, el anticipo queda en tu caja.</p></li>
+            </ol>
+            <div class="demo demo-planton">
+              <div class="msg msg--in"><span class="msg-auto"><svg class="ic"><use href="#i-rayo"/></svg>Recordatorio</span>Qué más, Mateo 👋 Mañana a las 11:00 a. m. tenés turno con Andrés. ¿Confirmás?
+                <span class="msg-botones"><span class="msg-boton">Confirmo</span><span class="msg-boton">Cambiar hora</span></span>
+              </div>
+              <div class="demo-estados">
+                <span class="estado estado--alerta"><svg class="ic"><use href="#i-cal"/></svg>Recordatorio enviado</span>
+                <span class="demo-linea"></span>
+                <span class="estado estado--ok"><svg class="ic"><use href="#i-check"/></svg>Confirmó en 2 min</span>
+              </div>
+            </div>
+            <p class="auto-plata"><svg class="ic"><use href="#i-plata"/></svg>Esta semana: <b>$80.000 en anticipos retenidos</b> y 6 turnos reasignados <span class="nota-ejemplo nota-ejemplo--inline">Datos de ejemplo</span></p>
+          </div>
+
+          <!-- 3. Fila virtual -->
+          <div class="auto-panel" role="tabpanel" id="panel-fila" aria-labelledby="tab-fila" data-panel="fila" hidden>
+            <ol class="receta">
+              <li><span class="receta-k">Cuando</span><p>Alguien llega sin cita y escanea el QR de la puerta.</p></li>
+              <li><span class="receta-k">Entonces</span><p>Entra a la fila virtual y ve su turno en vivo desde el celular, sin quedarse parado en el local.</p></li>
+              <li><span class="receta-k">Resultado</span><p>Cuando faltan dos turnos le llega: «Salí ya, te toca».</p></li>
+            </ol>
+            <div class="demo demo-fila">
+              <div class="fila-tarjeta">
+                <span class="mono fila-k">Tu turno</span>
+                <span class="fila-pos">2º</span>
+                <span class="fila-espera">Te toca en unos <b>15 min</b></span>
+                <span class="fila-barra"><span class="poste is-on"></span></span>
+              </div>
+              <ul class="fila-lista">
+                <li><span class="mono">1</span>Brayan M. <small>En el local</small></li>
+                <li class="es-vos"><span class="mono">2</span>Vos <small>En camino</small></li>
+                <li><span class="mono">3</span>Esteban C. <small>Esperando en la casa</small></li>
+                <li><span class="mono">4</span>Julián H. <small>Esperando en la casa</small></li>
+              </ul>
+            </div>
+            <p class="auto-plata"><svg class="ic"><use href="#i-plata"/></svg>Esta semana: <b>41 clientes sin cita atendidos</b>, ninguno se fue por la espera <span class="nota-ejemplo nota-ejemplo--inline">Datos de ejemplo</span></p>
+          </div>
+
+          <!-- 4. Ciclo de corte -->
+          <div class="auto-panel" role="tabpanel" id="panel-ciclo" aria-labelledby="tab-ciclo" data-panel="ciclo" hidden>
+            <ol class="receta">
+              <li><span class="receta-k">Cuando</span><p>Se cumple el ciclo del cliente. Sebastián se motila cada 18 días.</p></li>
+              <li><span class="receta-k">Entonces</span><p>Le escribe con tres horarios de su barbero de siempre.</p></li>
+              <li><span class="receta-k">Resultado</span><p>Reserva con un toque y vuelve antes de irse a otra parte.</p></li>
+            </ol>
+            <div class="demo demo-ciclo">
+              <div class="ciclo-cliente">
+                <span class="avatar">SA</span>
+                <span class="ciclo-datos"><b>Sebastián Arango</b><small>Fade medio · siempre con Juan</small></span>
+                <span class="ciclo-dias mono">16 de 18 días</span>
+                <span class="ciclo-barra"><span class="poste is-on" style="width:89%"></span></span>
+              </div>
+              <div class="msg msg--in"><span class="msg-auto"><svg class="ic"><use href="#i-rayo"/></svg>Ciclo de corte</span>Parce, ya van 16 días desde tu último fade ✂️ ¿Te guardo con Juan?
+                <span class="msg-botones"><span class="msg-boton">Jue 6:00 p. m.</span><span class="msg-boton">Vie 5:20 p. m.</span><span class="msg-boton">Sáb 10:00 a. m.</span></span>
+              </div>
+            </div>
+            <p class="auto-plata"><svg class="ic"><use href="#i-plata"/></svg>Esta semana: <b>$540.000 en cortes que volvieron solos</b> <span class="nota-ejemplo nota-ejemplo--inline">Datos de ejemplo</span></p>
+          </div>
+
+          <!-- 5. Huecos libres -->
+          <div class="auto-panel" role="tabpanel" id="panel-huecos" aria-labelledby="tab-huecos" data-panel="huecos" hidden>
+            <ol class="receta">
+              <li><span class="receta-k">Cuando</span><p>A las 12 del día todavía quedan sillas libres en la tarde.</p></li>
+              <li><span class="receta-k">Entonces</span><p>Les avisa a los clientes con el ciclo vencido, empezando por los que viven más cerca.</p></li>
+              <li><span class="receta-k">Resultado</span><p>Las horas muertas se llenan sin tener que regalar el corte.</p></li>
+            </ol>
+            <div class="demo demo-huecos">
+              <div class="huecos-fila">
+                <span class="huecos-hora mono">2:00</span>
+                <span class="huecos-slot ocupado">Felipe V.</span>
+                <span class="huecos-slot lleno">Nuevo · Tomás U.</span>
+                <span class="huecos-slot ocupado">Daniel M.</span>
+              </div>
+              <div class="huecos-fila">
+                <span class="huecos-hora mono">3:00</span>
+                <span class="huecos-slot lleno">Nuevo · Samuel C.</span>
+                <span class="huecos-slot ocupado">Óscar D.</span>
+                <span class="huecos-slot lleno">Nuevo · Simón E.</span>
+              </div>
+              <div class="huecos-fila">
+                <span class="huecos-hora mono">4:00</span>
+                <span class="huecos-slot ocupado">Nicolás Á.</span>
+                <span class="huecos-slot ocupado">David G.</span>
+                <span class="huecos-slot libre">Libre</span>
+              </div>
+              <p class="huecos-nota"><span class="estado estado--neon"><svg class="ic"><use href="#i-rayo"/></svg>12:00 m.</span> Mensaje a 25 clientes · 4 turnos llenos en 40 min</p>
+            </div>
+            <p class="auto-plata"><svg class="ic"><use href="#i-plata"/></svg>Esta semana: <b>$315.000 en horas que iban a quedar vacías</b> <span class="nota-ejemplo nota-ejemplo--inline">Datos de ejemplo</span></p>
+          </div>
+
+          <!-- 6. Liquidación -->
+          <div class="auto-panel" role="tabpanel" id="panel-liquida" aria-labelledby="tab-liquida" data-panel="liquida" hidden>
+            <ol class="receta">
+              <li><span class="receta-k">Cuando</span><p>Cierra la semana: sábado, 9:00 p. m.</p></li>
+              <li><span class="receta-k">Entonces</span><p>Calcula servicios, porcentaje o alquiler de silla y propinas de cada barbero.</p></li>
+              <li><span class="receta-k">Resultado</span><p>Cada uno recibe su resumen por WhatsApp y le pagás por Bre-B con un toque.</p></li>
+            </ol>
+            <div class="demo demo-liquida">
+              <ul class="liquida-lista">
+                <li><span class="avatar avatar--sm">JU</span><span><b>Juan</b><small>38 servicios · 60 %</small></span><b class="num">$1.012.000</b></li>
+                <li><span class="avatar avatar--sm">KE</span><span><b>Kevin</b><small>31 servicios · 60 %</small></span><b class="num">$826.000</b></li>
+                <li><span class="avatar avatar--sm">SE</span><span><b>Sebas</b><small>Alquiler de silla</small></span><b class="num">$1.430.000</b></li>
+              </ul>
+              <span class="btn btn--sm liquida-btn"><svg class="ic"><use href="#i-plata"/></svg>Pagar a todos por Bre-B</span>
+            </div>
+            <p class="auto-plata"><svg class="ic"><use href="#i-plata"/></svg>Esta semana: <b>la cuenta del domingo se hizo sola</b> <span class="nota-ejemplo nota-ejemplo--inline">Datos de ejemplo</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== UN SÁBADO (scroll horizontal) ===================== -->
+  <section class="sabado" id="sabado" data-sabado>
+    <div class="sabado-escena" data-sabado-escena>
+      <div class="contenedor sabado-cabeza">
+        <div>
+          <p class="eyebrow">02 · Un sábado cualquiera</p>
+          <h2 class="titular sec-titulo"><span class="ligero">Así trabaja Barber SaaS</span> <strong>mientras vos cortás.</strong></h2>
+        </div>
+        <div class="sabado-tablero" aria-hidden="true">
+          <div><small class="mono">Hora</small><b class="mono" data-reloj>7:00 a. m.</b></div>
+          <div><small class="mono">Recuperado hoy</small><b class="mono neon-txt" data-recuperado>$0</b></div>
+        </div>
+      </div>
+      <div class="sabado-progreso" aria-hidden="true"><span class="poste is-on" data-progreso></span></div>
+      <div class="sabado-ventana">
+        <ol class="sabado-pista" data-pista>
+          <li class="momento" data-min="420" data-plata="0">
+            <span class="momento-hora mono">7:00 a. m.</span>
+            <span class="momento-ico"><svg class="ic"><use href="#i-sol"/></svg></span>
+            <h3>Recordatorios de la mañana</h3>
+            <p>18 clientes recibieron su recordatorio. 16 confirmaron con un toque antes del desayuno.</p>
+          </li>
+          <li class="momento" data-min="550" data-plata="45000">
+            <span class="momento-hora mono">9:10 a. m.</span>
+            <span class="momento-ico"><svg class="ic"><use href="#i-ciclo"/></svg></span>
+            <h3>Cancelación salvada</h3>
+            <p>Mateo canceló las 11:00. La lista de espera tomó el turno en 4 minutos.</p>
+            <span class="momento-plata mono">+$45.000</span>
+          </li>
+          <li class="momento" data-min="630" data-plata="0">
+            <span class="momento-hora mono">10:30 a. m.</span>
+            <span class="momento-ico"><svg class="ic"><use href="#i-fila"/></svg></span>
+            <h3>Fila virtual llena</h3>
+            <p>Seis personas sin cita esperando desde la casa. Nadie parado en la puerta.</p>
+          </li>
+          <li class="momento" data-min="720" data-plata="105000">
+            <span class="momento-hora mono">12:00 m.</span>
+            <span class="momento-ico"><svg class="ic"><use href="#i-hueco"/></svg></span>
+            <h3>Huecos de la tarde</h3>
+            <p>Quedaban tres sillas libres a las 3. Mensaje a 25 clientes con el ciclo vencido y se llenaron.</p>
+            <span class="momento-plata mono">+$105.000</span>
+          </li>
+          <li class="momento" data-min="880" data-plata="10000">
+            <span class="momento-hora mono">2:40 p. m.</span>
+            <span class="momento-ico"><svg class="ic"><use href="#i-escudo"/></svg></span>
+            <h3>Plantón sin pérdida</h3>
+            <p>Un cliente no llegó. El anticipo quedó en caja y él mismo reagendó para el martes.</p>
+            <span class="momento-plata mono">+$10.000</span>
+          </li>
+          <li class="momento" data-min="1035" data-plata="30000">
+            <span class="momento-hora mono">5:15 p. m.</span>
+            <span class="momento-ico"><svg class="ic"><use href="#i-tijeras"/></svg></span>
+            <h3>Ciclo de corte</h3>
+            <p>Sebastián llevaba 19 días sin pasar. Reservó el jueves a las 6 con Juan, desde el mensaje.</p>
+            <span class="momento-plata mono">+$30.000</span>
+          </li>
+          <li class="momento" data-min="1170" data-plata="0">
+            <span class="momento-hora mono">7:30 p. m.</span>
+            <span class="momento-ico"><svg class="ic"><use href="#i-estrella"/></svg></span>
+            <h3>Reseñas que llegan solas</h3>
+            <p>Nueve clientes dejaron reseña en Google. Cuatro mandaron foto del corte para tu Instagram.</p>
+          </li>
+          <li class="momento" data-min="1260" data-plata="0">
+            <span class="momento-hora mono">9:00 p. m.</span>
+            <span class="momento-ico"><svg class="ic"><use href="#i-plata"/></svg></span>
+            <h3>Liquidación del día</h3>
+            <p>Cada barbero recibió su resumen. Les pagaste por Bre-B sin sacar la calculadora.</p>
+          </li>
+          <li class="momento momento--total">
+            <span class="momento-hora mono">Cierre</span>
+            <p class="momento-total-k">Plata que antes se perdía</p>
+            <b class="momento-total num">+$190.000</b>
+            <p>En un solo sábado y sin que nadie dejara de cortar.</p>
+            <span class="nota-ejemplo">Datos de ejemplo</span>
+          </li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== POR QUÉ (comparación) ===================== -->
+  <section class="porque claro" id="por-que">
+    <div class="contenedor">
+      <div class="sec-cabeza">
+        <p class="eyebrow">03 · Por qué Barber SaaS</p>
+        <h2 class="titular sec-titulo" data-reveal><span class="ligero">Una agenda te dice quién viene.</span> <strong>Barber SaaS hace que venga.</strong></h2>
+      </div>
+      <div class="tabla-envoltura" data-reveal>
+        <table class="comparar">
+          <thead>
+            <tr>
+              <th scope="col"><span class="sr-only">Función</span></th>
+              <th scope="col">Cuaderno y WhatsApp</th>
+              <th scope="col">App de reservas genérica</th>
+              <th scope="col" class="es-bs"><span class="logo logo--mini"><span class="logo-mark"><span class="poste"></span></span><span><b>Barber</b><span>SaaS</span></span></span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><th scope="row">Contesta y agenda por WhatsApp a cualquier hora</th><td><span class="no">No</span></td><td><span class="medio">Solo con link</span></td><td class="es-bs"><span class="si">Sí</span></td></tr>
+            <tr><th scope="row">Fila virtual para los que llegan sin cita</th><td><span class="no">No</span></td><td><span class="no">No</span></td><td class="es-bs"><span class="si">Sí</span></td></tr>
+            <tr><th scope="row">Le escribe al cliente cuando ya le toca corte</th><td><span class="no">No</span></td><td><span class="no">No</span></td><td class="es-bs"><span class="si">Sí</span></td></tr>
+            <tr><th scope="row">Anticipo con Nequi y Bre-B para frenar plantones</th><td><span class="medio">Pidiendo pantallazo</span></td><td><span class="medio">A veces</span></td><td class="es-bs"><span class="si">Sí</span></td></tr>
+            <tr><th scope="row">Ficha de corte: cómo le gusta a cada cliente</th><td><span class="medio">En la memoria</span></td><td><span class="no">No</span></td><td class="es-bs"><span class="si">Sí</span></td></tr>
+            <tr><th scope="row">Liquidación por porcentaje o alquiler de silla</th><td><span class="medio">A mano</span></td><td><span class="medio">A medias</span></td><td class="es-bs"><span class="si">Sí</span></td></tr>
+            <tr><th scope="row">Te dice cuánta plata recuperó cada automatización</th><td><span class="no">No</span></td><td><span class="no">No</span></td><td class="es-bs"><span class="si">Sí</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== COBROS ===================== -->
+  <section class="cobros" id="cobros">
+    <div class="cobros-luz" aria-hidden="true"></div>
+    <div class="contenedor cobros-grid">
+      <div class="cobros-texto">
+        <p class="eyebrow">04 · Cobros en Colombia</p>
+        <h2 class="titular sec-titulo" data-reveal><span class="ligero">La plata entra</span> <strong>antes de que se siente en la silla.</strong></h2>
+        <p class="sec-intro" data-reveal>Anticipos al reservar, pagos en el local y propinas, en el mismo lugar y con los medios que usan tus clientes.</p>
+        <ul class="medios" aria-label="Medios de pago">
+          <li>Nequi</li><li>Bre-B</li><li>Daviplata</li><li>PSE</li><li>Tarjeta</li><li>Efectivo</li>
+        </ul>
+        <ul class="cobros-lista">
+          <li><svg class="ic"><use href="#i-check"/></svg><span><b>Anticipo fijo o por porcentaje.</b> Vos decidís cuánto y para qué servicios.</span></li>
+          <li><svg class="ic"><use href="#i-check"/></svg><span><b>Propina digital</b> al cerrar el servicio, directo a la cuenta del barbero.</span></li>
+          <li><svg class="ic"><use href="#i-check"/></svg><span><b>Cierre de caja automático</b> todas las noches, con lo que entró por cada medio.</span></li>
+          <li><svg class="ic"><use href="#i-check"/></svg><span><b>Liquidación por porcentaje o alquiler de silla</b>, como trabaje tu barbería.</span></li>
+        </ul>
+        <p class="letra-chica">Los medios disponibles dependen de la configuración de cada barbería.</p>
+      </div>
+      <div class="cobros-visual" data-reveal>
+        <div class="caja-tarjeta">
+          <div class="caja-cabeza">
+            <span><small class="mono">Caja de hoy</small><b class="num">$1.245.000</b></span>
+            <span class="estado estado--ok"><svg class="ic"><use href="#i-check"/></svg>Cuadrada</span>
+          </div>
+          <ul class="caja-movs">
+            <li><span class="caja-ico"><svg class="ic"><use href="#i-cal"/></svg></span><span><b>Anticipo · Camilo R.</b><small>Bre-B · cita de mañana 4:00 p. m.</small></span><b class="num pos">+$10.000</b></li>
+            <li><span class="caja-ico"><svg class="ic"><use href="#i-tijeras"/></svg></span><span><b>Corte + barba · Felipe V.</b><small>Nequi · con Juan</small></span><b class="num pos">+$45.000</b></li>
+            <li><span class="caja-ico"><svg class="ic"><use href="#i-estrella"/></svg></span><span><b>Propina · para Kevin</b><small>Nequi</small></span><b class="num pos">+$5.000</b></li>
+            <li><span class="caja-ico"><svg class="ic"><use href="#i-plata"/></svg></span><span><b>Pago a Juan · liquidación</b><small>Bre-B · enviado al instante</small></span><b class="num neg">−$186.000</b></li>
+          </ul>
+        </div>
+        <div class="flota flota--caja">
+          <span class="flota-ico flota-ico--ok"><svg class="ic"><use href="#i-check"/></svg></span>
+          <span><small>Pago enviado</small><b>Juan recibió su liquidación</b></span>
+        </div>
+        <p class="nota-ejemplo">Vista ilustrativa · Datos de ejemplo</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CÓMO ARRANCAR ===================== -->
+  <section class="pasos claro" id="como-funciona">
+    <div class="contenedor">
+      <div class="sec-cabeza">
+        <p class="eyebrow">05 · Cómo arrancar</p>
+        <h2 class="titular sec-titulo" data-reveal><span class="ligero">Lista en una tarde.</span> <strong>Sin instalar nada.</strong></h2>
+      </div>
+      <ol class="pasos-lista">
+        <li data-reveal>
+          <span class="paso-n mono">01</span>
+          <h3>Creá tu barbería</h3>
+          <p>Servicios, precios, barberos y horarios. Si ya tenés tus clientes en WhatsApp, te ayudamos a traerlos.</p>
+        </li>
+        <li data-reveal>
+          <span class="paso-n mono">02</span>
+          <h3>Conectá WhatsApp y cobros</h3>
+          <p>Escaneás un código con tu WhatsApp Business y elegís por dónde te llegan los anticipos.</p>
+        </li>
+        <li data-reveal>
+          <span class="paso-n mono">03</span>
+          <h3>Prendé las automatizaciones</h3>
+          <p>Elegís las que querés, ajustás los mensajes a tu manera de hablar y listo. Vos cortás.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ===================== PRECIOS ===================== -->
+  <section class="precios" id="precios">
+    <div class="contenedor">
+      <div class="sec-cabeza sec-cabeza--centro">
+        <p class="eyebrow">06 · Precios</p>
+        <h2 class="titular sec-titulo" data-reveal><span class="ligero">Precios en pesos.</span> <strong>Sin letra escondida.</strong></h2>
+        <div class="periodo" role="group" aria-label="Periodo de pago" data-periodo>
+          <button type="button" class="is-activo" aria-pressed="true" data-p="mes">Mensual</button>
+          <button type="button" aria-pressed="false" data-p="anio">Anual <span class="periodo-tag">2 meses gratis</span></button>
+        </div>
+      </div>
+      <div class="planes">
+        <article class="plan" data-reveal>
+          <h3>Barbero independiente</h3>
+          <p class="plan-para">Para el que trabaja solo o alquila silla.</p>
+          <p class="plan-precio"><b class="num" data-mes="49.900" data-anio="41.600">$49.900</b><span>/ mes</span></p>
+          <p class="plan-nota" data-nota-anual>Facturado mes a mes</p>
+          <a class="btn btn--ghost" href="app/index.html?nuevo=1&amp;plan=independiente">Probar 14 días gratis</a>
+          <ul>
+            <li><svg class="ic"><use href="#i-check"/></svg>Agenda y link de reservas</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Asistente de WhatsApp 24/7</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Recordatorios y anti-plantón</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Anticipos con Nequi y Bre-B</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Ficha de corte por cliente</li>
+          </ul>
+        </article>
+        <article class="plan plan--destacado" data-reveal>
+          <span class="plan-badge"><span class="poste is-on"></span>El que más escogen</span>
+          <h3>Barbería</h3>
+          <p class="plan-para">Hasta 6 sillas, con todo el equipo.</p>
+          <p class="plan-precio"><b class="num" data-mes="129.900" data-anio="108.300">$129.900</b><span>/ mes</span></p>
+          <p class="plan-nota" data-nota-anual>Facturado mes a mes</p>
+          <a class="btn" href="app/index.html?nuevo=1&amp;plan=barberia">Probar 14 días gratis <svg class="ic flecha"><use href="#i-flecha"/></svg></a>
+          <ul>
+            <li><svg class="ic"><use href="#i-check"/></svg>Todo lo del plan independiente</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Fila virtual con QR en la puerta</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Ciclo de corte y huecos libres</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Liquidación de barberos</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Reporte de plata recuperada</li>
+          </ul>
+        </article>
+        <article class="plan" data-reveal>
+          <h3>Varias sedes</h3>
+          <p class="plan-para">Para dos sedes o más.</p>
+          <p class="plan-precio"><span class="plan-desde">desde</span><b class="num" data-mes="119.900" data-anio="99.900">$119.900</b><span>/ sede</span></p>
+          <p class="plan-nota" data-nota-anual>Facturado mes a mes</p>
+          <a class="btn btn--ghost" href="app/index.html?nuevo=1&amp;plan=sedes">Probar 14 días gratis</a>
+          <ul>
+            <li><svg class="ic"><use href="#i-check"/></svg>Todo lo del plan Barbería</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Un panel con todas las sedes</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Roles para administradores</li>
+            <li><svg class="ic"><use href="#i-check"/></svg>Acompañamiento en el arranque</li>
+          </ul>
+        </article>
+      </div>
+      <p class="precios-pie">14 días gratis sin tarjeta. Cancelás cuando querás.</p>
+    </div>
+  </section>
+
+  <!-- ===================== PREGUNTAS ===================== -->
+  <section class="faq claro" id="preguntas">
+    <div class="contenedor faq-grid">
+      <div class="sec-cabeza">
+        <p class="eyebrow">07 · Preguntas</p>
+        <h2 class="titular sec-titulo" data-reveal><span class="ligero">Lo que todo barbero</span> <strong>pregunta primero.</strong></h2>
+      </div>
+      <div class="faq-lista">
+        <details>
+          <summary>¿Mis clientes tienen que descargar algo?<span class="faq-mas" aria-hidden="true"></span></summary>
+          <p>No. Reservan escribiéndole a tu WhatsApp o desde tu link de reservas, que abre en cualquier celular.</p>
+        </details>
+        <details>
+          <summary>¿Funciona con el WhatsApp que ya tengo?<span class="faq-mas" aria-hidden="true"></span></summary>
+          <p>Sí, con WhatsApp Business. El asistente responde desde tu mismo número y vos podés meterte a la conversación cuando querás.</p>
+        </details>
+        <details>
+          <summary>¿Qué pasa si un cliente no llega?<span class="faq-mas" aria-hidden="true"></span></summary>
+          <p>Si pediste anticipo, queda en tu caja. El sistema le escribe para reagendar y, si alguien estaba en lista de espera, le ofrece el turno.</p>
+        </details>
+        <details>
+          <summary>¿Cómo funciona la fila virtual?<span class="faq-mas" aria-hidden="true"></span></summary>
+          <p>Ponés un QR en la puerta. El que llega sin cita lo escanea, deja su nombre y ve su turno en vivo. Cuando faltan dos turnos le llega un WhatsApp para que se venga.</p>
+        </details>
+        <details>
+          <summary>¿Cómo me llega la plata de los anticipos?<span class="faq-mas" aria-hidden="true"></span></summary>
+          <p>Por los medios que actives: Nequi, Bre-B, Daviplata, PSE o tarjeta. Cada pago queda unido a su cita, así sabés de quién es cada peso.</p>
+        </details>
+        <details>
+          <summary>¿Sirve si trabajo solo?<span class="faq-mas" aria-hidden="true"></span></summary>
+          <p>Sí. El plan Barbero independiente está hecho para eso: agenda, WhatsApp y anticipos sin pagar por sillas que no tenés.</p>
+        </details>
+        <details>
+          <summary>¿Puedo cambiar los mensajes?<span class="faq-mas" aria-hidden="true"></span></summary>
+          <p>Todos. Cada automatización trae un mensaje listo y lo podés escribir a tu manera, con el nombre del cliente, la hora y el barbero.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CTA FINAL (dos puertas) ===================== -->
+  <section class="cta" id="empezar">
+    <div class="contenedor cta-grid">
+      <div class="cta-puerta cta-puerta--duenio" data-reveal>
+        <p class="eyebrow">Para el dueño</p>
+        <h2 class="titular"><span class="ligero">Probá Barber SaaS</span> <strong>con tu barbería.</strong></h2>
+        <p>Creala en un minuto y mirá la agenda, la fila y las automatizaciones funcionando con datos de ejemplo.</p>
+        <a class="btn btn--lg" href="app/index.html?nuevo=1">Crear mi barbería <svg class="ic flecha"><use href="#i-flecha"/></svg></a>
+      </div>
+      <div class="cta-puerta cta-puerta--cliente" data-reveal>
+        <p class="eyebrow">Para tus clientes</p>
+        <h3>Así reservan ellos</h3>
+        <p>Abrí la página de reservas como si fueras un cliente. Lo que reserves aparece en tu panel al instante.</p>
+        <a class="btn btn--ghost" href="reserva/index.html">Abrir página de reservas <svg class="ic flecha"><use href="#i-flecha"/></svg></a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="pie">
+  <div class="contenedor pie-grid">
+    <div class="pie-marca">
+      <a class="logo" href="#top"><span class="logo-mark"><span class="poste"></span></span><span><b>Barber</b><span>SaaS</span></span></a>
+      <p>Hecho en Medellín para las barberías de Colombia.</p>
+    </div>
+    <div>
+      <h4>Producto</h4>
+      <ul><li><a href="#automatizaciones">Automatizaciones</a></li><li><a href="#sabado">Un sábado</a></li><li><a href="#cobros">Cobros</a></li><li><a href="#precios">Precios</a></li></ul>
+    </div>
+    <div>
+      <h4>Plataforma</h4>
+      <ul><li><a href="app/index.html">Entrar al panel</a></li><li><a href="reserva/index.html">Página de reservas</a></li><li><a href="#preguntas">Preguntas</a></li></ul>
+    </div>
+  </div>
+  <div class="contenedor pie-legal">
+    <span>© 2026 Barber SaaS</span>
+    <span>Las vistas del producto son ilustrativas y usan datos de ejemplo.</span>
+  </div>
+</footer>
+
+</body>
+</html>

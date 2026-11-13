@@ -1,0 +1,10 @@
+# Secretos y datos: nunca al repositorio
+.env
+datos/
+*.db
+*.db-wal
+*.db-shm
+node_modules/
+
+# Configuración local del editor
+.claude/
