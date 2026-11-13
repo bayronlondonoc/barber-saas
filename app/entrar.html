@@ -11,11 +11,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
-  <link rel="stylesheet" href="../assets/css/base.css?v=202611101">
-  <link rel="stylesheet" href="../assets/css/reserva.css?v=202611101">
-  <script defer src="../assets/js/store.js?v=202611101"></script>
-  <script defer src="../assets/js/conexion.js?v=202611135"></script>
-  <script defer src="../assets/js/entrar.js?v=202611101"></script>
+  <link rel="stylesheet" href="../assets/css/base.css?v=202611141">
+  <link rel="stylesheet" href="../assets/css/reserva.css?v=202611141">
+  <script defer src="../assets/js/store.js?v=202611141"></script>
+  <script defer src="../assets/js/conexion.js?v=202611141"></script>
+  <script defer src="../assets/js/entrar.js?v=202611141"></script>
 </head>
 <body class="reserva" data-pagina="entrar">
   <div class="rs-fondo" aria-hidden="true"></div>
@@ -45,18 +45,13 @@
 
       <form class="rs-form" data-form="registro" novalidate hidden>
         <div class="rs-campo"><label for="r-barberia">Nombre de la barbería</label><input class="rs-input" id="r-barberia" name="barberia" required maxlength="60" placeholder="La Esquina Barber Club"></div>
-        <div class="rs-campo"><label for="r-barrio">Barrio o municipio</label>
-          <select class="rs-input" id="r-barrio" name="barrio">
-            <option>Laureles</option><option>El Poblado</option><option>Belén</option><option>Envigado</option><option>Robledo</option><option>Bello</option><option>Itagüí</option><option>Sabaneta</option><option>Manrique</option><option>Castilla</option><option>La América</option><option>Buenos Aires</option><option>Aranjuez</option><option>La Estrella</option><option>Otro</option>
-          </select>
-        </div>
         <div class="rs-campo"><label for="r-nombre">Tu nombre</label><input class="rs-input" id="r-nombre" name="nombre" autocomplete="name" required maxlength="40"></div>
         <div class="rs-campo"><label for="r-wa">Tu WhatsApp (opcional)</label><div class="rs-tel"><span>+57</span><input class="rs-input" id="r-wa" name="whatsapp" inputmode="numeric" maxlength="12" placeholder="300 123 4567"></div></div>
         <div class="rs-campo"><label for="r-email">Correo</label><input class="rs-input" id="r-email" name="email" type="email" autocomplete="email" required></div>
         <div class="rs-campo"><label for="r-clave">Contraseña (mínimo 8 caracteres)</label><input class="rs-input" id="r-clave" name="clave" type="password" autocomplete="new-password" minlength="8" required></div>
-        <label class="rs-check"><input type="checkbox" name="ejemplo"><span>Cargar datos de ejemplo para probar (citas, clientes y fila de muestra). Los podés borrar después.</span></label>
         <label class="rs-check"><input type="checkbox" name="acepto" required><span>Acepto el tratamiento de mis datos y los de mis clientes para operar la barbería (Ley 1581 de 2012).</span></label>
-        <button class="btn btn--lg rs-cta" type="submit">Crear mi barbería</button>
+        <button class="btn btn--lg rs-cta" type="submit">Crear mi cuenta</button>
+        <p class="rs-nota">Después te pedimos la ubicación, el horario, tus servicios con precios y tu equipo. Tu agenda arranca vacía.</p>
       </form>
     </main>
   </div>

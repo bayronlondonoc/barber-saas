@@ -32,7 +32,8 @@
 
   function iniciar() {
     if (!BS.conexion || BS.conexion.modo !== "servidor") {
-      $("#contenido").innerHTML = '<div class="rs-ok"><h2>Esta es la versión demo</h2><p>No hay servidor conectado, así que todo funciona con datos de ejemplo en tu navegador.</p><a class="btn btn--lg rs-cta" href="index.html?demo=1">Abrir la demo</a></div>';
+      $("#contenido").innerHTML = '<div class="rs-ok"><h2>Esta es la versión demo</h2><p>No hay servidor conectado: lo que crees queda guardado en este navegador.</p>' +
+        '<a class="btn btn--lg rs-cta" href="index.html?nuevo=1">Crear mi barbería</a><a class="btn btn--lg btn--ghost rs-cta" href="index.html?demo=1" style="margin-top:10px">Ver una barbería de ejemplo</a></div>';
       return;
     }
     // Si ya hay sesión, directo al panel

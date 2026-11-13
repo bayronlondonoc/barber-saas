@@ -149,11 +149,13 @@
     $("[data-dueno-ini]").textContent = U.iniciales(st.shop.dueno);
     var vivo = $("[data-accion='toggle-vivo']");
     vivo.setAttribute("aria-pressed", String(!!st.ajustes.demoVivo));
-    vivo.hidden = enServidor();
+    vivo.hidden = enServidor() || !BS.esEjemplo();
     var linkRes = $("[data-link-reservas]");
-    if (linkRes) linkRes.href = enServidor() ? BS.linkReservas() : "../reserva/index.html";
+    if (linkRes) linkRes.href = enServidor() ? BS.linkReservas() : reservaDemo();
+    var crearMia = $("[data-crear-mia]");
+    if (crearMia) crearMia.hidden = enServidor() || !BS.esEjemplo();
     var perfil = $("[data-perfil-sub]");
-    if (perfil) perfil.textContent = enServidor() ? "Dueño · " + ((BS.conexion.sesion && BS.conexion.sesion.usuario && BS.conexion.sesion.usuario.email) || "") : "Dueño · Demo";
+    if (perfil) perfil.textContent = enServidor() ? "Dueño · " + ((BS.conexion.sesion && BS.conexion.sesion.usuario && BS.conexion.sesion.usuario.email) || "") : BS.esEjemplo() ? "Barbería de ejemplo" : "Dueño · Demo";
   }
 
   /* ---------------- Toasts ---------------- */
@@ -248,6 +250,7 @@
         '<p class="saludo-sub">' + (abierto ? "Hoy tenés <b>" + citasHoy.length + " citas</b>, <b>" + fila.length + " en la fila</b> y" : "La barbería está cerrada ahora. Mientras tanto,") +
         " tus automatizaciones llevan <b>" + U.pesos(recuperado) + "</b> recuperados esta semana.</p></div>" +
         '<div class="chips"><button class="btn btn--suave btn--sm" data-accion="ir" data-ruta="asistente">' + ico("chat") + "Probar el asistente</button></div></div>";
+      if (APP.mostrarCompartir && APP.mostrarCompartir()) html += APP.compartirHTML({ compacta: true });
 
       // KPIs
       html += '<section class="kpis" aria-label="Resumen de hoy">' +
@@ -406,7 +409,8 @@
       var esHoy = U.mismoDia(dia, new Date());
       var h = BS.horario(dia);
       var barberos = ui.agendaBarbero === "todos" ? st.barberos : st.barberos.filter(function (b) { return b.id === ui.agendaBarbero; });
-      var html = '<div class="herramientas"><div class="navdia">' +
+      if (!barberos.length) { ui.agendaBarbero = "todos"; barberos = st.barberos; }
+      var html = (APP.mostrarCompartir && APP.mostrarCompartir() && esHoy ? APP.compartirHTML({ compacta: true }) : "") + '<div class="herramientas"><div class="navdia">' +
         '<button class="btn-ico" data-accion="agenda-dia" data-delta="-1" aria-label="Día anterior">' + ico("chevI") + "</button>" +
         '<button class="chip' + (esHoy ? " is-on" : "") + '" data-accion="agenda-dia" data-delta="0">Hoy</button>' +
         '<button class="btn-ico" data-accion="agenda-dia" data-delta="1" aria-label="Día siguiente">' + ico("chevD") + "</button>" +
@@ -644,6 +648,7 @@
     return '<svg viewBox="0 0 25 25" fill="#141212" shape-rendering="crispEdges" role="img" aria-label="Código QR de ejemplo para la fila virtual">' + celdas + finder(0, 0) + finder(n - 7, 0) + finder(0, n - 7) + "</svg>";
   }
   APP.qrSVG = qrSVG;
+  APP.descargarAfiche = function (op) { descargarAfiche(op); };
   // QR de verdad (librería qrcode-generator de cdnjs). Si no cargó, devuelve null y se usa el de ejemplo.
   function qrReal(texto) {
     if (typeof window.qrcode !== "function") return null;
@@ -656,8 +661,10 @@
     } catch (e) { return null; }
   }
   // Afiche listo para imprimir: título, QR, nombre de la barbería y el link escrito
-  function descargarAfiche() {
-    var link = BS.linkFila(), svg = qrReal(link), shop = BS.get().shop;
+  function descargarAfiche(op) {
+    op = Object.assign({ link: BS.linkFila(), kicker: "FILA VIRTUAL · SIN CITA", linea1: "Escaneá y esperá", linea2: "desde donde estés",
+      pie: "Te avisamos por WhatsApp cuando se acerque tu turno", archivo: "qr-fila-" + BS.get().shop.slug + ".png" }, op || {});
+    var link = op.link, svg = qrReal(link), shop = BS.get().shop;
     if (!svg) { toast({ tipo: "x", titulo: "QR", texto: "No pudimos generar el QR. Revisá tu internet y recargá la página." }); return; }
     var url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml" })), img = new Image();
     var fuentes = document.fonts && document.fonts.load ? Promise.all(['800 84px "Bricolage Grotesque"', '500 34px "Inter"', '500 28px "JetBrains Mono"'].map(function (f) { return document.fonts.load(f); })) : Promise.resolve();
@@ -668,17 +675,17 @@
         g.fillStyle = "#f5f1ea"; g.fillRect(0, 0, W, H);
         g.fillStyle = "#ff4b2b"; g.fillRect(0, 0, W, 26);
         g.textAlign = "center"; g.fillStyle = "#c2381c"; g.font = '600 30px "JetBrains Mono", monospace';
-        g.fillText("FILA VIRTUAL · SIN CITA", W / 2, 140);
+        g.fillText(op.kicker, W / 2, 140);
         g.fillStyle = "#141212"; g.font = '800 88px "Bricolage Grotesque", sans-serif';
-        g.fillText("Escaneá y esperá", W / 2, 255); g.fillText("desde donde estés", W / 2, 350);
+        g.fillText(op.linea1, W / 2, 255); g.fillText(op.linea2, W / 2, 350);
         g.imageSmoothingEnabled = false; g.drawImage(img, 220, 420, 760, 760);
         g.font = '800 58px "Bricolage Grotesque", sans-serif'; g.fillText(shop.nombre, W / 2, 1300);
         g.fillStyle = "#4a4545"; g.font = '500 34px "Inter", sans-serif';
-        g.fillText("Te avisamos por WhatsApp cuando se acerque tu turno", W / 2, 1370);
+        g.fillText(op.pie, W / 2, 1370);
         g.font = '500 26px "JetBrains Mono", monospace'; g.fillText(link.replace(/^https?:\/\//, ""), W / 2, 1530);
         URL.revokeObjectURL(url);
         c.toBlob(function (b) {
-          var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = "qr-fila-" + shop.slug + ".png";
+          var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = op.archivo;
           document.body.appendChild(a); a.click(); a.remove();
           setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
         }, "image/png");
@@ -726,7 +733,7 @@
       var notaQR = function (t) { return '<p class="nota-ejemplo" style="font-family:var(--f-mono);font-size:11px;color:var(--humo-2)">' + t + "</p>"; };
       html += '<div class="hoy-col"><section class="card qr-card"><div class="card-cab" style="width:100%;margin:0"><div style="text-align:left"><h2>Tu QR de la puerta</h2><p>Imprimilo y pegalo en la entrada</p></div></div>' +
         '<div class="qr">' + (qrDeVerdad || qrSVG(st.shop.slug)) + '</div><span class="qr-link">' + esc(BS.linkFila().replace(/^https?:\/\//, "")) + "</span>" +
-        '<div class="chips" style="justify-content:center"><a class="btn btn--suave btn--sm" href="' + (enServidor() ? esc(BS.linkFila()) : "../reserva/index.html?modo=fila") + '" target="_blank" rel="noopener">' + ico("externo") + "Abrir como cliente</a>" +
+        '<div class="chips" style="justify-content:center"><a class="btn btn--suave btn--sm" href="' + (enServidor() ? esc(BS.linkFila()) : reservaDemo("modo=fila")) + '" target="_blank" rel="noopener">' + ico("externo") + "Abrir como cliente</a>" +
         (qrDeVerdad ? '<button class="btn btn--sm" data-accion="qr-descargar">' + ico("descargar") + "Descargar afiche</button></div>"
           : enServidor() ? "</div>" + notaQR("No pudimos generar el QR. Revisá tu internet y recargá.")
           : '<button class="btn btn--sm" data-accion="fila-simular">' + ico("qr") + "Simular un escaneo</button></div>" + notaQR("QR de ejemplo")) + "</section>";
@@ -828,12 +835,14 @@
     if (cli.sinPromos) out.push('<span class="etq">Sin promociones</span>');
     return out.join("");
   }
+  // El cliente de prueba del simulador del asistente no es un cliente de verdad
+  function clientesReales() { return BS.get().clientes.filter(function (c) { return !c.prueba && c.etiquetas.indexOf("Prueba") < 0; }); }
   APP.vistas.clientes = {
     titulo: "Clientes",
-    sub: function () { return BS.get().clientes.length + " clientes · el ciclo de corte se aprende solo"; },
+    sub: function () { return clientesReales().length + " clientes · el ciclo de corte se aprende solo"; },
     html: function () {
       var st = BS.get();
-      var todos = st.clientes.slice();
+      var todos = clientesReales();
       var grupos = {
         todos: todos,
         toca: todos.filter(function (c) { return BS.estadoCiclo(c).estado === "toca"; }),
@@ -864,7 +873,8 @@
         var b = BS.barbero(c.barbero);
         return '<tr data-accion="ver-cliente" data-id="' + c.id + '" tabindex="0"><td><div class="celda-cli">' + avatar(c.nombre) + "<span><b>" + esc(c.nombre) + '</b><small>' + esc(U.telefonoBonito(c.tel)) + '</small><span class="etiquetas">' + etiquetasHTML(c) + "</span></span></div></td>" +
           '<td class="ciclo">' + cicloCelda(c) + '</td><td class="oc-movil">' + U.hace(c.ultima) + '</td><td class="num oc-movil">' + c.visitas + '</td><td class="num">' + U.pesos(c.gasto) + '</td><td class="oc-movil">' + esc(b ? b.nombre : "—") + "</td></tr>";
-      }).join("") + "</tbody></table>" + (lista.length ? "" : '<div class="vacio"><b>Sin resultados</b>Probá con otro nombre o filtro.</div>') + "</section>";
+      }).join("") + "</tbody></table>" + (lista.length ? "" : todos.length ? '<div class="vacio"><b>Sin resultados</b>Probá con otro nombre o filtro.</div>'
+        : '<div class="vacio"><b>Todavía no tenés clientes</b>Aparecen solos cuando reservan por tu link, por WhatsApp o cuando agendás una cita a mano.</div>') + "</section>";
       return html;
     }
   };
@@ -952,20 +962,19 @@
   /* ==========================================================================
      VISTA: AJUSTES
      ========================================================================== */
-  var BARRIOS = ["Laureles", "El Poblado", "Belén", "Envigado", "Robledo", "Bello", "Itagüí", "Sabaneta", "Manrique", "Castilla", "La América", "Buenos Aires", "Aranjuez", "La Estrella", "Otro"];
+  var BARRIOS = APP.BARRIOS = ["Laureles", "El Poblado", "Belén", "Envigado", "Robledo", "Bello", "Itagüí", "Sabaneta", "Manrique", "Castilla", "La América", "Buenos Aires", "Aranjuez", "La Estrella", "Otro"];
   APP.vistas.ajustes = {
     titulo: "Ajustes",
     sub: function () { return "Tu barbería, tus servicios y cómo cobrás"; },
     html: function () {
       var st = BS.get(), s = st.shop;
-      var html = '<div class="ajustes-grid"><section class="card"><div class="card-cab"><h2>Tu barbería</h2></div><div class="form" data-form-shop>' +
+      var html = '<div class="ajustes-grid"><section class="card"><div class="card-cab"><div><h2>Tu link de reservas</h2><p>Mandáselo a tus clientes: reservan solos y cae en tu agenda</p></div></div>' + APP.compartirHTML() + '</section><section class="card"><div class="card-cab"><h2>Tu barbería</h2></div><div class="form" data-form-shop>' +
         '<div class="campo"><label for="aj-nombre">Nombre</label><input class="input" id="aj-nombre" name="nombre" value="' + esc(s.nombre) + '"></div>' +
         '<div class="form-fila"><div class="campo"><label for="aj-barrio">Barrio o municipio</label><select class="input" id="aj-barrio" name="barrio">' + BARRIOS.map(function (b) { return "<option" + (b === s.barrio ? " selected" : "") + ">" + b + "</option>"; }).join("") + "</select></div>" +
         '<div class="campo"><label for="aj-dueno">Tu nombre</label><input class="input" id="aj-dueno" name="dueno" value="' + esc(s.dueno) + '"></div></div>' +
         '<div class="campo"><label for="aj-dir">Dirección</label><input class="input" id="aj-dir" name="direccion" value="' + esc(s.direccion) + '"></div>' +
         '<div class="form-fila"><div class="campo"><label for="aj-wa">Tu WhatsApp (alertas y cierre de caja)</label><input class="input" id="aj-wa" name="whatsapp" inputmode="tel" placeholder="300 123 4567" value="' + esc(s.whatsapp || "") + '"></div>' +
         '<div class="campo"><label for="aj-resena">Link para reseñas (Google)</label><input class="input" id="aj-resena" name="linkResena" placeholder="https://g.page/r/…" value="' + esc(s.linkResena || "") + '"></div></div>' +
-        '<div class="campo"><span class="campo-k">Tu link de reservas</span><div class="chips"><span class="chip" style="cursor:default">' + ico("enlace") + esc(BS.linkReservas()) + '</span><button class="btn btn--suave btn--sm" data-accion="copiar-link">' + ico("copiar") + "Copiar</button></div></div>" +
         '<div><button class="btn" data-accion="ajustes-guardar">' + ico("check") + "Guardar cambios</button></div></div></section>";
       html += '<section class="card"><div class="card-cab"><div><h2>Anticipo y medios de pago</h2><p>El anticipo frena los plantones</p></div></div>' +
         '<div class="interruptor-fila"><span><b>Pedir anticipo al reservar</b><small>Por WhatsApp y por el link de reservas</small></span><label class="switch"><input type="checkbox" data-accion="aj-anticipo"' + (s.anticipo.activo ? " checked" : "") + ' aria-label="Pedir anticipo"><span></span></label></div>' +
@@ -974,17 +983,17 @@
         Object.keys(BS.MEDIOS).map(function (m) {
           return '<div class="interruptor-fila"><span><b>' + BS.MEDIOS[m] + "</b><small>" + (m === "breb" ? "Pagos al instante entre bancos" : m === "efectivo" ? "En el local" : m === "pse" ? "Desde la cuenta del banco" : "Habilitado para tus clientes") + '</small></span><label class="switch"><input type="checkbox" data-accion="aj-medio" data-m="' + m + '"' + (s.medios[m] ? " checked" : "") + ' aria-label="' + BS.MEDIOS[m] + '"><span></span></label></div>';
         }).join("") + "</section>";
-      html += '<section class="card"><div class="card-cab"><div><h2>Servicios</h2><p>Duración en minutos y precio en pesos</p></div></div><div class="form" data-form-servicios>' +
-        st.servicios.map(function (sv) {
-          return '<div class="servicio-fila" data-sv="' + sv.id + '"><input class="input" name="nombre" value="' + esc(sv.nombre) + '" aria-label="Nombre del servicio"><input class="input" name="dur" type="number" min="10" step="5" value="' + sv.dur + '" aria-label="Duración en minutos"><input class="input" name="precio" type="number" min="0" step="1000" value="' + sv.precio + '" aria-label="Precio"></div>';
-        }).join("") + '<div><button class="btn btn--suave" data-accion="servicios-guardar">' + ico("check") + "Guardar servicios</button></div></div></section>";
-      html += '<section class="card"><div class="card-cab"><div><h2>Horario</h2><p>Así ven tus clientes cuándo hay turnos</p></div></div>' +
-        [1, 2, 3, 4, 5, 6, 0].map(function (d) {
-          var h = s.horario[d];
-          return '<div class="interruptor-fila"><span><b style="text-transform:capitalize">' + U.DIAS[d] + "</b></span><span class=\"sub\">" + (h ? U.horaMin(h[0]) + " a " + U.horaMin(h[1]) : "Cerrado") + "</span></div>";
-        }).join("") + "</section>";
+      html += '<section class="card"><div class="card-cab"><div><h2>Servicios y precios</h2><p>El primero es tu servicio principal</p></div></div>' + APP.editores.serviciosHTML(st.servicios) +
+        '<div style="margin-top:14px"><button class="btn btn--suave" data-accion="servicios-guardar">' + ico("check") + "Guardar servicios</button></div></section>";
+      html += '<section class="card"><div class="card-cab"><div><h2>Tu equipo</h2><p>Cada barbero tiene su columna en la agenda</p></div></div>' + APP.editores.barberosHTML(st.barberos, s.dueno) +
+        '<div style="margin-top:14px"><button class="btn btn--suave" data-accion="equipo-guardar">' + ico("check") + "Guardar equipo</button></div></section>";
+      html += '<section class="card"><div class="card-cab"><div><h2>Horario</h2><p>Así ven tus clientes cuándo hay turnos</p></div></div>' + APP.editores.horarioHTML(s.horario) +
+        '<div style="margin-top:14px"><button class="btn btn--suave" data-accion="horario-guardar">' + ico("check") + "Guardar horario</button></div></section>";
       if (enServidor()) html += conexionesHTML();
-      else html += '<section class="card"><div class="card-cab"><div><h2>Datos de ejemplo</h2><p>Todo lo que ves es una demo que vive en este navegador</p></div></div>' +
+      else if (!BS.esEjemplo()) html += '<section class="card"><div class="card-cab"><div><h2>Esta es una demo</h2><p>Tu barbería vive en este navegador</p></div></div>' +
+        '<p class="sub" style="font-size:14px">Todo lo que creaste queda guardado aquí. Con la cuenta real, tus clientes reservan desde cualquier celular y el asistente responde en tu WhatsApp.</p>' +
+        '<div class="chips" style="margin-top:14px"><a class="btn btn--suave" href="index.html?demo=1">' + ico("tienda") + 'Ver una barbería de ejemplo</a><button class="btn btn--ghost" data-accion="borrar-mia">' + ico("basura") + "Borrar y empezar de nuevo</button></div></section>";
+      else html += '<section class="card"><div class="card-cab"><div><h2>Barbería de ejemplo</h2><p>Datos inventados para que veas todo funcionando</p></div></div>' +
         '<div class="interruptor-fila"><span><b>Demo en vivo</b><small>Simula clientes reservando y llegando a la fila cada minuto</small></span><label class="switch"><input type="checkbox" data-accion="aj-vivo"' + (st.ajustes.demoVivo ? " checked" : "") + ' aria-label="Demo en vivo"><span></span></label></div>' +
         '<div style="margin-top:14px"><button class="btn btn--ghost" data-accion="reset-demo">' + ico("ciclo") + "Reiniciar datos de ejemplo</button></div></section>";
       return html + "</div>";
@@ -1018,7 +1027,7 @@
     html: function () {
       return '<div class="mas-lista">' + RUTAS.filter(function (r) { return ["hoy", "agenda", "fila", "automatizaciones"].indexOf(r.id) < 0; }).map(function (r) {
         return '<a href="#/' + r.id + '">' + ico(r.ico) + r.txt + "</a>";
-      }).join("") + '<a href="' + (enServidor() ? esc(BS.linkReservas()) : "../reserva/index.html") + '" target="_blank" rel="noopener">' + ico("web") + "Página de reservas<small>Así reservan tus clientes</small></a>" +
+      }).join("") + '<a href="' + (enServidor() ? esc(BS.linkReservas()) : reservaDemo()) + '" target="_blank" rel="noopener">' + ico("web") + "Página de reservas<small>Así reservan tus clientes</small></a>" +
         (enServidor() ? '<button type="button" data-accion="salir">' + ico("flecha") + "Cerrar sesión<small>En este dispositivo</small></button>" : "") +
         '<a href="../index.html">' + ico("flecha") + "Volver a la web<small>barbersaas</small></a></div>";
     }
@@ -1027,31 +1036,6 @@
   /* ==========================================================================
      ONBOARDING
      ========================================================================== */
-  function onboarding() {
-    var s = BS.get().shop;
-    APP.abrirModal('<div class="onb-marca"><span class="logo-mark"><span class="poste is-on"></span></span><span class="eyebrow">Bienvenido a Barber SaaS</span></div>' +
-      "<h2>Creá tu barbería en un minuto.</h2><p>Te armamos la agenda, el asistente de WhatsApp y 12 automatizaciones con datos de ejemplo para que veas todo funcionando.</p>" +
-      '<div class="form" data-onb><div class="campo"><label for="onb-nombre">¿Cómo se llama tu barbería?</label><input class="input" id="onb-nombre" name="nombre" placeholder="' + esc(s.nombre) + '" autofocus></div>' +
-      '<div class="form-fila"><div class="campo"><label for="onb-barrio">Barrio o municipio</label><select class="input" id="onb-barrio" name="barrio">' + BARRIOS.map(function (b) { return "<option" + (b === s.barrio ? " selected" : "") + ">" + b + "</option>"; }).join("") + "</select></div>" +
-      '<div class="campo"><label for="onb-dueno">Tu nombre</label><input class="input" id="onb-dueno" name="dueno" placeholder="' + esc(s.dueno) + '"></div></div></div>' +
-      '<div class="modal-acc"><button class="btn btn--ghost" data-accion="onb-ejemplo">Ver la de ejemplo</button><button class="btn" data-accion="onb-crear">Crear mi barbería' + ico("flecha", "flecha") + "</button></div>",
-      { onb: true });
-    capa.firstChild.classList.add("onb");
-  }
-  function onbProgreso(nombre) {
-    var pasos = ["Agenda y horario listos", "4 barberos y 7 servicios cargados", "Asistente de WhatsApp conectado (demo)", "12 automatizaciones prendidas"];
-    capa.firstChild.innerHTML = '<div class="onb-marca"><span class="logo-mark"><span class="poste is-on"></span></span><span class="eyebrow">Armando ' + esc(nombre) + "</span></div><h2>Un momento, parce…</h2>" +
-      '<div class="onb-barra"><span class="poste is-on" data-onb-barra></span></div><div class="onb-pasos">' + pasos.map(function (p) { return '<div class="onb-paso"><i>' + ico("check") + "</i>" + p + "</div>"; }).join("") + "</div>";
-    var items = $$(".onb-paso", capa), barra = $("[data-onb-barra]", capa);
-    items.forEach(function (el, i) {
-      setTimeout(function () { el.classList.add("is-hecho"); barra.style.width = ((i + 1) / items.length) * 100 + "%"; }, 450 + i * 520);
-    });
-    setTimeout(function () {
-      APP.cerrarCapa();
-      APP.toastSimple(nombre + " ya está andando. Mirá cómo trabajan tus automatizaciones.", "rayo", "¡Listo!");
-    }, 450 + items.length * 520 + 500);
-  }
-
   /* ==========================================================================
      DEMO EN VIVO
      ========================================================================== */
@@ -1272,15 +1256,36 @@
         APP.toastSimple("Guardado. Tu página de reservas ya muestra los cambios.", "check", "Ajustes");
         break;
       case "servicios-guardar":
-        $$("[data-sv]", vistaEl).forEach(function (fila) {
-          var sv = BS.servicio(fila.getAttribute("data-sv"));
-          sv.nombre = $("[name='nombre']", fila).value.trim() || sv.nombre;
-          sv.dur = Math.max(10, Number($("[name='dur']", fila).value) || sv.dur);
-          sv.precio = Math.max(0, Number($("[name='precio']", fila).value) || sv.precio);
-        });
+        var ed = APP.editores, stS = BS.get();
+        var servs = ed.leerServicios($("[data-editor='servicios']", vistaEl), stS.servicios);
+        var errS = ed.validarServicios(servs) || conCitas(stS.servicios, servs, "servicio");
+        if (errS) { APP.toastSimple(errS, "x", "Servicios"); break; }
+        stS.servicios = servs;
         BS.commit("servicios"); render(true);
-        APP.toastSimple("Servicios guardados.", "check", "Ajustes");
+        APP.toastSimple("Servicios guardados. Tu página de reservas ya muestra los precios nuevos.", "check", "Ajustes");
         break;
+      case "equipo-guardar":
+        var stE = BS.get();
+        var barbs = APP.editores.leerBarberos($("[data-editor='barberos']", vistaEl), stE.barberos, stE.shop.dueno, stE.shop.whatsapp);
+        var errE = APP.editores.validarBarberos(barbs) || conCitas(stE.barberos, barbs, "barbero");
+        if (errE) { APP.toastSimple(errE, "x", "Equipo"); break; }
+        stE.barberos = barbs;
+        BS.commit("barberos"); render(true);
+        APP.toastSimple("Equipo guardado. La agenda ya tiene una columna por barbero.", "check", "Ajustes");
+        break;
+      case "horario-guardar":
+        var hor = APP.editores.leerHorario($("[data-editor='horario']", vistaEl));
+        var errH = APP.editores.validarHorario(hor);
+        if (errH) { APP.toastSimple(errH, "x", "Horario"); break; }
+        BS.get().shop.horario = hor;
+        BS.commit("shop"); render(true);
+        APP.toastSimple("Horario guardado. Solo se puede reservar dentro de estas horas.", "check", "Ajustes");
+        break;
+      case "borrar-mia":
+        APP.abrirModal("<h2>¿Borrar " + esc(BS.get().shop.nombre) + " de este navegador?</h2><p>Se borran las citas, clientes y ajustes de esta demo y volvés a crear tu barbería desde cero. No se puede deshacer.</p>" +
+          '<div class="modal-acc"><button class="btn btn--ghost" data-accion="cerrar">Cancelar</button><button class="btn" data-accion="borrar-mia-ok">Sí, borrar</button></div>');
+        break;
+      case "borrar-mia-ok": BS.borrarLocal(); location.replace("index.html?nuevo=1"); break;
       case "aj-anticipo-tipo": BS.get().shop.anticipo.tipo = el.getAttribute("data-t"); BS.commit("shop"); render(true); break;
       case "copiar-link":
         var link = /^https?:/.test(BS.linkReservas()) ? BS.linkReservas() : "https://" + BS.linkReservas();
@@ -1291,21 +1296,21 @@
         APP.abrirModal("<h2>¿Reiniciar los datos de ejemplo?</h2><p>Se borran las citas, clientes y automatizaciones que creaste en esta demo y vuelve todo al estado inicial. No se puede deshacer.</p>" +
           '<div class="modal-acc"><button class="btn btn--ghost" data-accion="cerrar">Cancelar</button><button class="btn" data-accion="reset-ok">Sí, reiniciar</button></div>');
         break;
-      case "reset-ok": APP.cerrarCapa(); BS.reset(); marcarVistos(); render(true); APP.toastSimple("Datos de ejemplo reiniciados.", "ciclo", "Listo"); setTimeout(onboarding, 400); break;
+      case "reset-ok": APP.cerrarCapa(); BS.reset(); marcarVistos(); render(true); APP.toastSimple("Datos de ejemplo reiniciados.", "ciclo", "Listo"); break;
 
-      case "onb-crear":
-        var fo = $("[data-onb]", capa);
-        var nombre = $("[name='nombre']", fo).value.trim() || BS.get().shop.nombre;
-        var dueno = $("[name='dueno']", fo).value.trim() || BS.get().shop.dueno;
-        var barrio = $("[name='barrio']", fo).value;
-        BS.get().barberos[0].nombre = dueno;
-        BS.actualizarShop({ nombre: nombre, dueno: dueno, barrio: barrio, direccion: barrio + ", Medellín", onboarded: true, slug: U.normalizar(nombre).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 32) || "mi-barberia" });
-        onbProgreso(nombre);
-        break;
-      case "onb-ejemplo": BS.actualizarShop({ onboarded: true }); APP.cerrarCapa(); break;
       default: return false;
     }
     return true;
+  }
+
+  /** Un servicio o barbero con citas no se puede quitar: la agenda y la caja los necesitan. */
+  function conCitas(antes, despues, tipo) {
+    var quedan = {}; despues.forEach(function (x) { quedan[x.id] = 1; });
+    var campo = tipo === "servicio" ? "servicio" : "barbero";
+    var quitado = antes.filter(function (x) { return !quedan[x.id] && BS.get().citas.some(function (c) { return c[campo] === x.id; }); })[0];
+    if (!quitado) return "";
+    return tipo === "servicio" ? "«" + quitado.nombre + "» ya tiene citas: no lo podés quitar. Cambiale el nombre o el precio."
+      : quitado.nombre + " ya tiene citas en la agenda: no lo podés quitar todavía.";
   }
 
   function leerEditor(c) {
@@ -1396,6 +1401,8 @@
      ========================================================================== */
   function enServidor() { return BS.conexion && BS.conexion.modo === "servidor"; }
   APP.enServidor = enServidor;
+  /** Página de reservas en la demo: la de ejemplo lleva ?demo=1 para no mezclarse con la barbería del dueño. */
+  function reservaDemo(extra) { var q = (BS.esEjemplo() ? ["demo=1"] : []).concat(extra ? [extra] : []); return "../reserva/index.html" + (q.length ? "?" + q.join("&") : ""); }
   function demoActiva() { return !enServidor() && BS.get().ajustes.demoVivo; }
 
   function boot() {
@@ -1407,7 +1414,6 @@
     BS.subscribe(function () { programarRender(); refrescarCapa(); revisarToasts(); });
     render(true);
     var params = new URLSearchParams(location.search);
-    if (!enServidor() && (!BS.get().shop.onboarded || params.get("nuevo") === "1")) setTimeout(onboarding, 350);
     if (params.get("nuevo") || params.get("demo")) history.replaceState(null, "", location.pathname + (params.get("demo") ? "?demo=1" : "") + location.hash);
     setInterval(function () {
       if (demoActiva()) avanzarDemo();
@@ -1422,6 +1428,14 @@
       '<p style="margin-top:16px"><button class="btn" onclick="location.reload()">Intentar de nuevo</button></p></div>';
   }
   // Los scripts van con «defer»: se espera a DOMContentLoaded (app-bot.js ya registró su vista) y a que la conexión decida el modo
-  function arrancar() { (BS.listo || Promise.resolve()).then(boot, errorArranque); }
+  function arrancar() {
+    (BS.listo || Promise.resolve()).then(function () {
+      var params = new URLSearchParams(location.search), st = BS.get();
+      // Servidor: la cuenta recién creada configura su barbería. Demo: sin barbería propia, o «Probar gratis» (?nuevo=1)
+      var registrar = enServidor() ? !st.shop.onboarded : !BS.esEjemplo() && (!st || params.get("nuevo") === "1");
+      if (registrar && APP.registro) APP.registro.abrir({ alTerminar: boot, previa: !enServidor() && st ? st.shop.nombre : "" });
+      else boot();
+    }).catch(errorArranque);
+  }
   if (document.readyState === "complete") arrancar(); else document.addEventListener("DOMContentLoaded", arrancar);
 })();

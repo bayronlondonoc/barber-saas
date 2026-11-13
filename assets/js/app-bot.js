@@ -19,7 +19,8 @@
 
   function nuevaConv() {
     var cli = BS.cliente("c1") || BS.get().clientes[0];
-    if (!cli) cli = BS.upsertCliente({ nombre: "Cliente de prueba", tel: "3000000000" });
+    // Barbería sin clientes: el simulador usa un cliente de prueba que no aparece en la lista de Clientes
+    if (!cli) { cli = BS.upsertCliente({ nombre: "Cliente de prueba", tel: "3000000000" }); cli.etiquetas = ["Prueba"]; cli.prueba = true; }
     return A.nuevaConv(cli.id, tono());
   }
   function datosConv() { return enServidor() ? (remoto && remoto.conv) || { mensajes: [], estado: { paso: "inicio" } } : conv; }

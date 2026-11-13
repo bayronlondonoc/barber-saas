@@ -11,15 +11,16 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
-  <link rel="stylesheet" href="../assets/css/base.css?v=202611101">
-  <link rel="stylesheet" href="../assets/css/app.css?v=202611101">
-  <script defer src="../assets/js/store.js?v=202611101"></script>
-  <script defer src="../assets/js/engine.js?v=202611101"></script>
-  <script defer src="../assets/js/asistente-core.js?v=202611131"></script>
-  <script defer src="../assets/js/conexion.js?v=202611135"></script>
+  <link rel="stylesheet" href="../assets/css/base.css?v=202611141">
+  <link rel="stylesheet" href="../assets/css/app.css?v=202611141">
+  <script defer src="../assets/js/store.js?v=202611141"></script>
+  <script defer src="../assets/js/engine.js?v=202611141"></script>
+  <script defer src="../assets/js/asistente-core.js?v=202611141"></script>
+  <script defer src="../assets/js/conexion.js?v=202611141"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" integrity="sha384-mZT2gIty7ZDdOGkxfP6joZcYdMW1Jvj9dRlfpTmaJAKKXTqzygtB22k7FLe+KZC1" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script defer src="../assets/js/app.js?v=202611134"></script>
-  <script defer src="../assets/js/app-bot.js?v=202611131"></script>
+  <script defer src="../assets/js/app.js?v=202611141"></script>
+  <script defer src="../assets/js/app-bot.js?v=202611141"></script>
+  <script defer src="../assets/js/app-registro.js?v=202611141"></script>
 </head>
 <body class="app" data-pagina="panel">
   <a class="saltar" href="#vista">Saltar al contenido</a>
@@ -60,6 +61,7 @@
             <span class="vivo-punto"></span><span class="vivo-txt">Demo en vivo</span>
           </button>
           <a class="btn btn--suave btn--sm barra-reservas" href="../reserva/index.html" target="_blank" rel="noopener" data-link-reservas>Página de reservas</a>
+          <a class="btn btn--sm" href="index.html?nuevo=1" data-crear-mia hidden>Crear mi barbería</a>
           <button class="btn btn--sm" type="button" data-accion="nueva-cita">Nueva cita</button>
         </div>
       </header>
@@ -71,6 +73,7 @@
   </div>
 
   <nav class="tabbar" data-tabbar aria-label="Menú"></nav>
+  <div class="registro" data-registro hidden></div>
   <div class="capa" data-capa hidden></div>
   <div class="toasts" data-toasts aria-live="polite"></div>
 </body>

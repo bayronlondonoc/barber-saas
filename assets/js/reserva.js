@@ -149,8 +149,8 @@
     $("[data-estado-local]").innerHTML = estado;
     var dias = [1, 2, 3, 4, 5, 6, 0];
     $("[data-datos]").innerHTML =
-      (enServidor() ? (s.resenas ? '<span class="rs-dato">' + ico("estrella") + "<span>" + String(s.rating).replace(".", ",") + " <small>· " + s.resenas + " reseñas</small></span></span>" : "")
-        : '<span class="rs-dato">' + ico("estrella") + "<span>" + String(s.rating).replace(".", ",") + " <small>· " + s.resenas + " reseñas (datos de ejemplo)</small></span></span>") +
+      // Las reseñas solo aparecen si hay; las de la barbería de ejemplo van marcadas
+      (s.resenas ? '<span class="rs-dato">' + ico("estrella") + "<span>" + String(s.rating).replace(".", ",") + " <small>· " + s.resenas + " reseñas" + (BS.esEjemplo() ? " (datos de ejemplo)" : "") + "</small></span></span>" : "") +
       '<span class="rs-dato">' + ico("ubicacion") + "<span>" + esc(s.direccion) + "</span></span>" +
       '<span class="rs-dato">' + ico("chat") + "<span>También podés reservar por WhatsApp <small>· responde al instante</small></span></span>" +
       '<div class="rs-horario">' + dias.map(function (d) {
@@ -199,7 +199,7 @@
       s2 ? '<button class="resumen" data-rs="editar" data-p="2">' + esc(bNombre) + "</button>" : "",
       '<div class="rs-barberos"><button class="rs-barbero rs-barbero--libre' + (R.barbero === "cualquiera" ? " is-on" : "") + '" data-rs="barbero" data-id="cualquiera"><span class="avatar"><span class="poste is-on"></span></span><b>El que esté libre</b><small>Más turnos disponibles</small></button>' +
       st.barberos.map(function (b) {
-        return '<button class="rs-barbero' + (R.barbero === b.id ? " is-on" : "") + '" data-rs="barbero" data-id="' + b.id + '"><span class="avatar">' + esc(U.iniciales(b.nombre)) + "</span><b>" + esc(b.nombre) + (b.alias ? ' <small style="display:inline">«' + esc(b.alias) + "»</small>" : "") + "</b><small>" + esc(b.especialidades.join(" · ")) + " · " + String(b.rating).replace(".", ",") + " ★</small></button>";
+        return '<button class="rs-barbero' + (R.barbero === b.id ? " is-on" : "") + '" data-rs="barbero" data-id="' + b.id + '"><span class="avatar">' + esc(U.iniciales(b.nombre)) + "</span><b>" + esc(b.nombre) + (b.alias ? ' <small style="display:inline">«' + esc(b.alias) + "»</small>" : "") + "</b><small>" + esc([(b.especialidades || []).join(" · ")].concat(BS.esEjemplo() ? [String(b.rating).replace(".", ",") + " ★"] : []).filter(Boolean).join(" · ") || (b.modo === "dueno" ? "Dueño" : "Barbero")) + "</small></button>";
       }).join("") + "</div>");
 
     var contenido3 = "";
@@ -270,7 +270,7 @@
       (abono ? "<div><span>Anticipo pagado</span><b>" + U.pesos(abono) + " · " + BS.MEDIOS[c.anticipo.medio] + '</b></div><div class="total"><span>Pagás en la barbería</span><b>' + U.pesos(c.precio - abono) + "</b></div>" : '<div class="total"><span>Pagás en la barbería</span><b>' + U.pesos(c.precio) + "</b></div>") + "</div>" +
       (msg ? '<div class="rs-wa"><p class="rs-wa-k">' + ico("chat") + 'Te llegó esto a tu WhatsApp</p><div class="msg msg--in"><span class="msg-auto">' + ico("rayo") + "Automático</span>" + esc(msg) + '<span class="msg-meta">' + U.hora(new Date()) + "</span></div></div>" : "") +
       '<div class="rs-acciones"><button class="btn" data-rs="ics">' + ico("cal") + 'Agregar a mi calendario</button><button class="btn btn--ghost" data-rs="otra">Hacer otra reserva</button>' +
-      '<a class="btn btn--suave" href="../app/index.html#/agenda" target="_blank" rel="noopener">Ver la cita en el panel de la barbería (demo)' + ico("flecha") + "</a></div></div>";
+      '<a class="btn btn--suave" href="../app/index.html' + (BS.esEjemplo() ? "?demo=1" : "") + '#/agenda" target="_blank" rel="noopener">Ver la cita en el panel de la barbería (demo)' + ico("flecha") + "</a></div></div>";
   }
 
   /* ---------------- Fila virtual ---------------- */
@@ -280,6 +280,7 @@
     if (enServidor() && BS.conexion.noEncontrada) return '<div class="rs-ok"><h2>No encontramos esta barbería</h2><p>Revisá el link que te pasaron.</p></div>';
     if (enServidor() && remoto.fila) return htmlTurnoRemoto();
     var st = BS.get(), abierto = BS.abiertoAhora(), fila = BS.filaOrdenada();
+    R.filaServicio = BS.servicioValido(R.filaServicio); // cada barbería tiene sus propios servicios
     var mia = miFila();
     if (R.filaId && !mia) {
       var c = st.citas.filter(function (x) { return x.fuente === "fila" && x.estado === "en-silla" && R.teTocaCliente && x.cliente === R.teTocaCliente; })[0];
@@ -316,7 +317,7 @@
     var html2 = '<div class="rs-fila-vivo"><div><b>' + fila.length + "</b><small>" + (fila.length === 1 ? "persona esperando" : "personas esperando") + "</small></div><div><b>~" + BS.esperaFila(fila.length + 1) + ' min</b><small>espera si entrás ya</small></div></div>' +
       '<p class="sub" style="font-size:14px;margin-bottom:14px">¿Llegaste sin cita? Hacé la fila desde tu casa: te avisamos por WhatsApp cuando falten 2 turnos.</p>' +
       '<div class="rs-form"><div class="rs-campo"><span class="rs-campo-k" style="font-size:13px;color:var(--humo);font-weight:500">¿Qué te vas a hacer?</span><div class="rs-servicios">' +
-      ["s1", "s2", "s3"].map(function (id) {
+      BS.get().servicios.slice(0, 3).map(function (sv) { return sv.id; }).map(function (id) {
         var s = BS.servicio(id);
         return '<button class="rs-opcion' + (R.filaServicio === id ? " is-on" : "") + '" data-rs="fila-servicio" data-id="' + id + '"><b>' + esc(s.nombre) + "</b><small>" + s.dur + ' min</small><span class="precio">' + U.pesos(s.precio) + "</span></button>";
       }).join("") + "</div></div>" +

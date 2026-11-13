@@ -63,14 +63,26 @@
       }
     }
 
-    if (prueba(/ barba /, t2) && prueba(/ corte| motil| pelo | cabello | peluque| fade | degradad/, t2)) pon("servicio", "s2");
-    else if (prueba(/ combo | completo /, t2)) pon("servicio", "s2");
-    else if (prueba(/ barba /, t2)) pon("servicio", "s3");
-    else if (prueba(/ nino | ninos | hijo | pelado | nina /, t2)) pon("servicio", "s4");
-    else if (prueba(/ ceja/, t2)) pon("servicio", "s6");
-    else if (prueba(/ disen| lineas? | rayas? | figura/, t2)) pon("servicio", "s5");
-    else if (prueba(/ mascarilla | limpieza /, t2)) pon("servicio", "s7");
-    else if (prueba(/ corte | cortar| motil| peluque| pelo | cabello | fade | degradad| recort| cortico /, t2)) pon("servicio", "s1");
+    // Cada barbería arma sus servicios: primero por el nombre exacto que escribió el cliente,
+    // después por palabras típicas (si el servicio sugerido ya no existe, se busca uno con ese nombre)
+    function ponServ(id, re) {
+      if (BS.servicio(id)) { pon("servicio", id); return; }
+      var s = BS.get().servicios.filter(function (x) { return re.test(" " + U.normalizar(x.nombre) + " "); })[0];
+      if (s) pon("servicio", s.id);
+    }
+    var exacto = BS.get().servicios.slice().sort(function (a, b) { return b.nombre.length - a.nombre.length; }).filter(function (s) {
+      var n = U.normalizar(s.nombre).replace(/[^a-z0-9]+/g, " ").trim();
+      return n.length > 3 && t2.indexOf(" " + n + " ") >= 0;
+    })[0];
+    if (exacto) pon("servicio", exacto.id);
+    else if (prueba(/ barba /, t2) && prueba(/ corte| motil| pelo | cabello | peluque| fade | degradad/, t2)) ponServ("s2", / corte.*barba | barba.*corte | combo /);
+    else if (prueba(/ combo | completo /, t2)) ponServ("s2", / combo | completo |barba.*corte|corte.*barba/);
+    else if (prueba(/ barba /, t2)) ponServ("s3", / barba /);
+    else if (prueba(/ nino | ninos | hijo | pelado | nina /, t2)) ponServ("s4", / nin(o|a|os) /);
+    else if (prueba(/ ceja/, t2)) ponServ("s6", / ceja/);
+    else if (prueba(/ disen| lineas? | rayas? | figura/, t2)) ponServ("s5", / disen| linea| raya/);
+    else if (prueba(/ mascarilla | limpieza /, t2)) ponServ("s7", / mascarilla | limpieza /);
+    else if (prueba(/ corte | cortar| motil| peluque| pelo | cabello | fade | degradad| recort| cortico /, t2)) ponServ("s1", / corte /);
     if (r.servicio && !BS.servicio(r.servicio)) { delete r.servicio; delete r.nuevos.servicio; }
 
     BS.get().barberos.forEach(function (b) {
@@ -319,7 +331,7 @@
     }
 
     if (e.paso === "fila-ofrecida" && r.intencion === "afirmar") {
-      var f = BS.unirseFila({ nombre: cliente.nombre, tel: cliente.tel, via: "whatsapp", servicio: e.servicio || "s1" });
+      var f = BS.unirseFila({ nombre: cliente.nombre, tel: cliente.tel, via: "whatsapp", servicio: BS.servicioValido(e.servicio) });
       conv.fila = f.id;
       var pos = BS.filaOrdenada().map(function (x) { return x.id; }).indexOf(f.id) + 1;
       e.paso = "inicio";

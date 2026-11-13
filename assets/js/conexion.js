@@ -36,7 +36,9 @@
   function nuncaTermina() { return new Promise(function () {}); }
 
   /* ---------------- Modo demo ---------------- */
-  function iniciarDemo() { C.modo = "demo"; BS.modoLocal(); }
+  // ?demo=1 → la barbería de ejemplo. Si no, la que el dueño creó en este navegador.
+  // El panel sin barbería abre el registro paso a paso; la página de reservas muestra la de ejemplo.
+  function iniciarDemo() { C.modo = "demo"; BS.modoLocal({ ejemplo: params.get("demo") === "1", respaldoEjemplo: pagina !== "panel" }); }
 
   /* ---------------- Panel conectado ---------------- */
   var base = null, enVuelo = false, otraVez = false, timer = null, fallos = 0;

@@ -107,7 +107,8 @@ ruta("POST", /^\/api\/registro$/, async (req, res, p, cuerpo) => {
   if (cuerpo.acepto !== true) throw new ErrorHTTP(400, "Necesitamos tu autorización para el tratamiento de datos.");
   if (uno("SELECT 1 AS x FROM usuarios WHERE email = ?", email)) throw new ErrorHTTP(409, "Ese correo ya tiene una cuenta. Entrá con tu contraseña.");
   const whatsapp = util.telValido(cuerpo.whatsapp) ? util.normTel(cuerpo.whatsapp) : "";
-  const b = nucleo.crearBarberia({ nombre: barberia, barrio: String(cuerpo.barrio || "Laureles").slice(0, 40), dueno: nombre, whatsapp, ejemplo: cuerpo.ejemplo === true });
+  // La barbería arranca vacía; ubicación, horario, servicios y equipo se llenan en el registro paso a paso
+  const b = nucleo.crearBarberia({ nombre: barberia, barrio: String(cuerpo.barrio || "").slice(0, 40), dueno: nombre, whatsapp, ejemplo: cuerpo.ejemplo === true, onboarded: false });
   const idU = util.id("usr");
   ejecutar("INSERT INTO usuarios (id, barberia_id, email, nombre, hash, rol, creado) VALUES (?, ?, ?, ?, ?, 'dueno', ?)", idU, b.id, email, nombre, hashClave(clave), new Date().toISOString());
   abrirSesion(res, idU);

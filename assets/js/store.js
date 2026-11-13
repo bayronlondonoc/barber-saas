@@ -9,13 +9,16 @@
 (function () {
   "use strict";
 
-  var KEY = "barbersaas.v1";
-  var VERSION = 6;
+  var KEY = "barbersaas.v1";            // la barbería que el dueño creó (demo sin servidor)
+  var KEY_EJEMPLO = KEY + ".ejemplo";  // la barbería de ejemplo, aparte: nunca se mezclan
+  var VERSION = 7;
   var RAIZ = typeof window !== "undefined" ? window : globalThis;
   var BS = RAIZ.BS || (RAIZ.BS = {});
   var estado = null;
   var oyentes = [];
   var modo = "local"; // «local» = localStorage (demo) · «memoria» = servidor o panel conectado
+  var ejemploModo = false; // en «local»: true = barbería de ejemplo, false = la del dueño
+  function clave() { return ejemploModo ? KEY_EJEMPLO : KEY; }
 
   /* ---------------- Utilidades ---------------- */
   function pad(n) { return (n < 10 ? "0" : "") + n; }
@@ -166,7 +169,10 @@
   ];
 
 
-  /* Servicios con los que arranca toda barbería (se editan en Ajustes) */
+  /* Horario sugerido: lunes a sábado 9 a. m. – 8 p. m. (viernes y sábado hasta 8:30), domingo 10 a. m. – 4 p. m. */
+  function horarioBase() { return { 0: [600, 960], 1: [540, 1200], 2: [540, 1200], 3: [540, 1200], 4: [540, 1200], 5: [540, 1230], 6: [540, 1230] }; }
+
+  /* Servicios sugeridos para arrancar (el dueño los ajusta en el registro y en Ajustes) */
   function serviciosBase() {
     return [
         { id: "s1", nombre: "Corte", dur: 40, precio: 30000, desc: "Máquina, tijera y peinado." },
@@ -417,7 +423,7 @@
     return {
       v: VERSION, creado: new Date().toISOString(), shop: shop, barberos: barberos, servicios: servicios,
       clientes: clientes, citas: citas, fila: fila, autos: autos, actividad: actividad, pagos: [],
-      ajustes: { demoVivo: true }
+      ajustes: { demoVivo: true }, ejemplo: true
     };
   }
 
@@ -431,19 +437,21 @@
       shop: {
         nombre: nombre, slug: d.slug || "mi-barberia", barrio: d.barrio || "Medellín", ciudad: d.ciudad || "Medellín",
         direccion: d.direccion || (d.barrio ? d.barrio + ", Medellín" : "Medellín"), dueno: dueno, whatsapp: d.whatsapp || "", plan: "barberia",
-        horario: { 0: [600, 960], 1: [540, 1200], 2: [540, 1200], 3: [540, 1200], 4: [540, 1200], 5: [540, 1230], 6: [540, 1230] },
+        horario: d.horario || horarioBase(),
         anticipo: { activo: true, tipo: "fijo", valor: 10000, porcentaje: 25 },
         medios: { nequi: true, breb: true, daviplata: true, pse: true, tarjeta: true, efectivo: true },
-        tono: "paisa", rating: 5, resenas: 0, linkResena: "", onboarded: true
+        tono: "paisa", rating: 5, resenas: 0, linkResena: "", onboarded: d.onboarded !== false
       },
-      barberos: [{ id: "b1", nombre: dueno, alias: "", rol: "Dueño", modo: "dueno", comision: 1, alquiler: 0, especialidades: ["Corte"], rating: 5, tel: d.whatsapp || "" }],
-      servicios: serviciosBase(), clientes: [], citas: [], fila: [], autos: autosBase(false),
+      barberos: d.barberos && d.barberos.length ? d.barberos : [{ id: "b1", nombre: dueno, alias: "", rol: "Dueño", modo: "dueno", comision: 1, alquiler: 0, especialidades: [], rating: 5, tel: d.whatsapp || "" }],
+      servicios: d.servicios && d.servicios.length ? d.servicios : serviciosBase(), clientes: [], citas: [], fila: [], autos: autosBase(false),
       actividad: [{ id: uid("ac"), t: new Date().toISOString(), tipo: "rayo", texto: "¡Bienvenido! " + nombre + " quedó creada con 12 automatizaciones listas." }],
       pagos: [], ajustes: { demoVivo: false }
     };
   }
   BS.semilla = semilla;
   BS.estadoNuevo = estadoNuevo;
+  BS.serviciosBase = serviciosBase;
+  BS.horarioBase = horarioBase;
 
   /* ---------------- Parches: lo que cambió entre dos estados ----------------
      Lo usan el panel (para mandar sus cambios) y el servidor (para aplicarlos).
@@ -497,18 +505,20 @@
   /* ---------------- Persistencia ---------------- */
   function guardar() {
     if (modo !== "local") return;
-    try { localStorage.setItem(KEY, JSON.stringify(estado)); } catch (e) { /* modo privado: queda en memoria */ }
+    if (!estado) return;
+    try { localStorage.setItem(clave(), JSON.stringify(estado)); } catch (e) { /* modo privado: queda en memoria */ }
   }
   function cargar() {
     var raw = null;
-    try { raw = localStorage.getItem(KEY); } catch (e) { raw = null; }
+    try { raw = localStorage.getItem(clave()); } catch (e) { raw = null; }
     if (raw) {
       try {
         var x = JSON.parse(raw);
         if (x && x.v === VERSION) { estado = x; return; }
       } catch (e) { /* datos dañados: se regeneran */ }
     }
-    estado = semilla();
+    // La barbería de ejemplo se genera sola; la del dueño solo existe después del registro paso a paso
+    estado = ejemploModo ? semilla() : null;
     guardar();
   }
   function avisar(motivo, dato) {
@@ -521,7 +531,7 @@
   }
 
   if (RAIZ.addEventListener) RAIZ.addEventListener("storage", function (e) {
-    if (modo !== "local" || e.key !== KEY || !e.newValue) return;
+    if (modo !== "local" || e.key !== clave() || !e.newValue) return;
     var previo = estado;
     try { estado = JSON.parse(e.newValue); } catch (err) { return; }
     var idsPrevios = {};
@@ -534,15 +544,31 @@
   BS.subscribe = function (fn) { oyentes.push(fn); return function () { oyentes = oyentes.filter(function (f) { return f !== fn; }); }; };
   BS.commit = commit;
   BS.reset = function () { estado = semilla(); commit("reset"); };
+  /** ¿Se está viendo la barbería de ejemplo? */
+  BS.esEjemplo = function () { return modo === "local" ? ejemploModo : !!(estado && estado.ejemplo); };
+  /** Demo sin servidor: guarda la barbería recién creada en el registro (reemplaza la anterior de este navegador). */
+  BS.crearLocal = function (nuevo) { modo = "local"; ejemploModo = false; estado = nuevo; commit("reset"); };
+  /** Demo sin servidor: borra la barbería del dueño de este navegador. */
+  BS.borrarLocal = function () { try { localStorage.removeItem(KEY); } catch (e) { /* nada */ } estado = null; };
   /** Trabaja con un estado en memoria (servidor o panel conectado). No toca localStorage. */
   BS.usar = function (nuevo) { modo = "memoria"; estado = nuevo; };
-  /** Modo demo: carga (o crea) los datos de ejemplo del navegador. */
-  BS.modoLocal = function () { modo = "local"; if (!estado) cargar(); };
+  /**
+   * Demo sin servidor. op.ejemplo → la barbería de ejemplo. Si no, la del dueño (null si aún no se registró);
+   * con op.respaldoEjemplo, cuando no hay barbería del dueño se muestra la de ejemplo (página de reservas).
+   */
+  BS.modoLocal = function (op) {
+    op = op || {};
+    modo = "local"; ejemploModo = !!op.ejemplo; estado = null;
+    cargar();
+    if (!estado && op.respaldoEjemplo) { ejemploModo = true; cargar(); }
+  };
   BS.modo = function () { return modo; };
 
   /* ---------------- Consultas ---------------- */
   function porId(lista, id) { for (var i = 0; i < lista.length; i++) if (lista[i].id === id) return lista[i]; return null; }
   BS.servicio = function (id) { return porId(BS.get().servicios, id); };
+  /** El servicio pedido si existe; si no, el principal (el primero de la lista). */
+  BS.servicioValido = function (id) { var s = id && BS.servicio(id); return s ? s.id : (BS.get().servicios[0] || { id: "s1" }).id; };
   BS.barbero = function (id) { return porId(BS.get().barberos, id); };
   BS.cliente = function (id) { return porId(BS.get().clientes, id); };
   BS.cita = function (id) { return porId(BS.get().citas, id); };
@@ -695,7 +721,7 @@
     if (!cli) {
       cli = {
         id: uid("c"), nombre: datos.nombre || "Cliente", tel: tel, ciclo: 21, ultima: new Date().toISOString(),
-        visitas: 0, gasto: 0, barbero: datos.barbero || "b2", cumple: "", etiquetas: ["Nuevo"], ficha: "", desde: new Date().toISOString(), nota: ""
+        visitas: 0, gasto: 0, barbero: datos.barbero || (st.barberos.filter(function (b) { return b.modo !== "dueno"; })[0] || st.barberos[0] || { id: "b1" }).id, cumple: "", etiquetas: ["Nuevo"], ficha: "", desde: new Date().toISOString(), nota: ""
       };
       st.clientes.push(cli);
     } else if (tel && !cli.tel) cli.tel = tel;
@@ -786,7 +812,7 @@
   BS.unirseFila = function (d) {
     var st = BS.get();
     var cli = d.tel || d.nombre ? BS.upsertCliente({ nombre: d.nombre, tel: d.tel }) : null;
-    var f = { id: uid("fi"), nombre: d.nombre || (cli && cli.nombre) || "Cliente", cliente: cli ? cli.id : null, tel: cli ? cli.tel : "", servicio: d.servicio || "s1", via: d.via || "qr", estado: "casa", entro: new Date().toISOString(), avisado: false };
+    var f = { id: uid("fi"), nombre: d.nombre || (cli && cli.nombre) || "Cliente", cliente: cli ? cli.id : null, tel: cli ? cli.tel : "", servicio: BS.servicioValido(d.servicio), via: d.via || "qr", estado: "casa", entro: new Date().toISOString(), avisado: false };
     st.fila.push(f);
     var pos = BS.filaOrdenada().indexOf(f) + 1;
     BS.actividad({ tipo: "fila", texto: nombreCorto(f.nombre) + " entró a la fila virtual por " + (f.via === "qr" ? "QR" : f.via === "web" ? "el link" : "WhatsApp") + " · va de " + pos + "º", auto: "a8", toast: true });

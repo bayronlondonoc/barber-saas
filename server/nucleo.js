@@ -56,7 +56,8 @@ function crearBarberia(d) {
     est.clientes.forEach((c) => { c.ejemplo = true; });
     est.fila.forEach((f) => { f.ejemplo = true; });
   } else {
-    est = BS.estadoNuevo({ nombre: d.nombre, barrio: d.barrio, dueno: d.dueno, whatsapp: d.whatsapp });
+    // Cuenta nueva y vacía: el dueño termina de configurarla en el registro paso a paso del panel
+    est = BS.estadoNuevo({ nombre: d.nombre, barrio: d.barrio, dueno: d.dueno, whatsapp: d.whatsapp, onboarded: d.onboarded });
   }
   est.shop.slug = slug;
   const ahora = new Date().toISOString();

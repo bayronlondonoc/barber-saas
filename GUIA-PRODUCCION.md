@@ -17,7 +17,7 @@ Esta guía explica cómo correr Barber SaaS en tu computador, cómo conectar Wha
 | `datos/` | La base de datos (SQLite). **Nunca se publica ni se sube a Git.** |
 | `.env.example` | Plantilla de la configuración. Se copia como `.env`. |
 
-Sin servidor, las páginas funcionan como **demo** (datos de ejemplo guardados en el navegador). Con el servidor andando, funcionan **de verdad**: cuentas, base de datos, sincronización en vivo entre dispositivos y automatizaciones que corren aunque el panel esté cerrado.
+Sin servidor, las páginas funcionan como **demo**: lo que se crea queda guardado en el navegador, y con `?demo=1` se ve una barbería de ejemplo llena de datos. Con el servidor andando, funcionan **de verdad**: cuentas, base de datos, sincronización en vivo entre dispositivos y automatizaciones que corren aunque el panel esté cerrado.
 
 ---
 
@@ -28,13 +28,13 @@ Sin servidor, las páginas funcionan como **demo** (datos de ejemplo guardados e
    ```bash
    npm start
    ```
-3. Abre <http://localhost:8765/app/entrar.html> y crea una cuenta. Si marcas **«Cargar datos de ejemplo»**, la barbería arranca con clientes y citas de muestra.
+3. Abre <http://localhost:8765/app/entrar.html> y crea una cuenta. Enseguida sale el **registro paso a paso**: ubicación, horario, servicios con precios y equipo. Al final aparece el link de reservas con el mensaje listo para mandarles a los clientes, y el panel abre **vacío**, en la agenda.
 
 Sin configurar nada, WhatsApp y pagos funcionan en **modo simulador**:
 
 - Los mensajes de WhatsApp aparecen en la actividad del panel y en la consola del servidor. No le llegan a ningún celular.
 - Los anticipos abren la pasarela de prueba (`/pago-simulado/`), donde se aprueba o se rechaza el pago.
-- Los clientes de los datos de ejemplo nunca reciben mensajes reales, aunque después conectes WhatsApp.
+- Para ver la plataforma llena de datos sin crear nada, abre `/app/?demo=1` (barbería de ejemplo, aparte de la tuya).
 
 **Para arrancar de cero:** detén el servidor y borra la carpeta `datos/`. Ahí quedaron las barberías de prueba que creé mientras probaba.
 
