@@ -19,7 +19,9 @@
     rayo: '<path d="M13 2.5L4.5 14H11l-1 7.5L19.5 10H13z"/>',
     fila: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.8a3.3 3.3 0 0 1 0 6.4M18.5 14.8c1.7.7 2.7 2.4 3 5.2"/>',
     escudo: '<path d="M12 3l7.5 3v5.5c0 4.5-3.2 8.2-7.5 9.5-4.3-1.3-7.5-5-7.5-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/>',
-    tijeras: '<circle cx="6" cy="6.5" r="3"/><circle cx="6" cy="17.5" r="3"/><path d="M8.6 8.1L20 18M8.6 15.9L20 6"/>'
+    tijeras: '<circle cx="6" cy="6.5" r="3"/><circle cx="6" cy="17.5" r="3"/><path d="M8.6 8.1L20 18M8.6 15.9L20 6"/>',
+    ciclo: '<path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 3.5V8h4.5"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 20.5V16h-4.5"/>',
+    buscar: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>'
   };
   function ico(n) { return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">' + (IC[n] || "") + "</svg>"; }
   function $(s, r) { return (r || document).querySelector(s); }
@@ -32,15 +34,17 @@
     modo: params.get("modo") === "fila" ? "fila" : "cita",
     servicio: null, barbero: null, dia: null, min: null,
     nombre: yo.nombre || "", tel: yo.tel || "", acepto: !!yo.tel, datosOk: false, errores: {},
-    medio: "breb", confirmada: null, filaId: leer(KEY_FILA), filaServicio: "s1", ultimaPos: null, teToca: null
+    medio: "breb", confirmada: null, filaId: leer(KEY_FILA), filaServicio: "s1", ultimaPos: null, teToca: null,
+    cambiando: null, movida: false, calif: {}, califTxt: {}, aCancelar: null
   };
+  function cap(s) { s = String(s || ""); return s.charAt(0).toUpperCase() + s.slice(1); }
   var cuerpo, capa, toastsEl;
 
   /* ---------------- Conectado al servidor ---------------- */
   function enServidor() { return BS.conexion && BS.conexion.modo === "servidor"; }
-  var remoto = { cita: null, token: null, sondeoCita: null, fila: null, sondeoFila: null };
+  var remoto = { cita: null, token: null, sondeoCita: null, fila: null, sondeoFila: null, mis: [] };
   function claveFila() { return KEY_FILA + ":" + (BS.conexion.slug || ""); }
-  function tecleando() { var a = document.activeElement; return a && a.matches && a.matches("input"); }
+  function tecleando() { var a = document.activeElement; return a && a.matches && a.matches("input, textarea"); }
 
   function reservarRemoto() {
     var btn = cuerpo.querySelector("[data-rs='pagar'], [data-rs='reservar']");
@@ -50,6 +54,7 @@
       tel: R.tel.replace(/\D/g, ""), acepto: R.acepto, medio: R.medio
     }).then(function (res) {
       guardarYo();
+      guardarMia(res.cita.id, res.token);
       if (res.pagoUrl) { location.href = res.pagoUrl; return; }
       remoto.cita = res.cita; remoto.token = res.token;
       render(); window.scrollTo({ top: 0, behavior: "smooth" });
@@ -72,11 +77,18 @@
   }
   function htmlConfirmadaRemota() {
     var c = remoto.cita, pendiente = c.anticipo && !c.anticipo.pagado;
-    if (c.estado === "cancelada") return '<div class="rs-ok"><h2>Esta reserva se canceló</h2><p>Si querés, hacé una nueva.</p><button class="btn btn--lg rs-cta" data-rs="otra">Hacer otra reserva</button></div>';
+    if (c.estado === "cancelada") return '<div class="rs-ok"><h2>Esta reserva se canceló</h2><p>Su turno ya quedó libre para otro cliente. Si querés, hacé una nueva.</p><button class="btn btn--lg rs-cta" data-rs="otra">Hacer otra reserva</button></div>';
+    var cn = normRemota(Object.assign({ token: remoto.token }, c));
+    // Visita que ya pasó (por ejemplo, desde el link para calificar): se califica aquí mismo
+    if (c.estado === "terminada" || c.estado === "no-show" || new Date(c.inicio).getTime() + c.dur * 60000 < Date.now()) {
+      return '<div class="rs-ok"><h2>Tu visita del ' + esc(U.fechaLarga(c.inicio)) + "</h2><p>" + esc(c.servicio) + " con " + esc(c.barbero) + " en " + esc(c.barberia) + ".</p>" +
+        (cn.puedeCalificar ? htmlCalificar(cn) : cn.calificacion ? '<p class="rs-gracias">' + ico("estrella") + " Calificaste con " + cn.calificacion.estrellas + " de 5. ¡Gracias!</p>" : "") +
+        '<div class="rs-acciones"><button class="btn btn--lg rs-cta" data-rs="repetir" data-s="' + esc(cn.servicioId) + '" data-b="' + esc(cn.barberoId) + '">' + ico("ciclo") + "Reservar otra vez</button></div></div>";
+    }
     var abono = c.anticipo && c.anticipo.pagado ? c.anticipo.monto : 0;
     return '<div class="rs-ok">' + (pendiente
         ? '<span class="rs-ok-ico" style="background:var(--alerta);box-shadow:0 0 0 10px var(--alerta-suave)">' + ico("reloj") + "</span><h2>Falta el anticipo</h2><p>Tu turno está apartado mientras confirmamos el pago. Esta página se actualiza sola.</p>"
-        : '<span class="rs-ok-ico">' + ico("check") + "</span><h2>¡Listo" + (c.cliente ? ", " + esc(c.cliente) : "") + "!</h2><p>Tu turno quedó reservado. Te esperamos en " + esc(c.barberia) + ".</p>") +
+        : '<span class="rs-ok-ico">' + ico("check") + "</span><h2>" + (R.movida ? "¡Listo, movimos tu turno!" : "¡Listo" + (c.cliente ? ", " + esc(c.cliente) : "") + "!") + "</h2><p>" + (R.movida ? "Te llega la confirmación con la hora nueva por WhatsApp." : "Tu turno quedó reservado. Te esperamos en " + esc(c.barberia) + ".") + "</p>") +
       '<div class="rs-resumen"><div><span>Servicio</span><b>' + esc(c.servicio) + "</b></div><div><span>Barbero</span><b>" + esc(c.barbero) + "</b></div>" +
       "<div><span>Día</span><b>" + esc(U.fechaLarga(c.inicio)) + "</b></div><div><span>Hora</span><b>" + U.hora(c.inicio) + "</b></div>" +
       (abono ? "<div><span>Anticipo pagado</span><b>" + U.pesos(abono) + " · " + (BS.MEDIOS[c.anticipo.medio] || "") + "</b></div>" : "") +
@@ -85,6 +97,7 @@
       (pendiente && !c.pagoUrl ? '<p class="rs-nota">El link para pagar el anticipo de ' + U.pesos(c.anticipo.monto) + " te llega por WhatsApp en unos minutos.</p>" : "") +
       (!pendiente && c.mensaje ? '<div class="rs-wa"><p class="rs-wa-k">' + ico("chat") + 'Te llegó esto a tu WhatsApp</p><div class="msg msg--in"><span class="msg-auto">' + ico("rayo") + "Automático</span>" + esc(c.mensaje) + "</div></div>" : "") +
       '<div class="rs-acciones">' + (!pendiente ? '<button class="btn" data-rs="ics">' + ico("cal") + "Agregar a mi calendario</button>" : "") +
+      botonesCambio(cn) +
       '<button class="btn btn--ghost" data-rs="otra">Hacer otra reserva</button></div>' +
       (c.direccion ? '<p class="rs-nota">' + ico("ubicacion").replace('class="ic"', 'class="ic" style="width:14px;height:14px;display:inline;vertical-align:-2px"') + " " + esc(c.direccion) + "</p>" : "") + "</div>";
   }
@@ -150,7 +163,11 @@
     var dias = [1, 2, 3, 4, 5, 6, 0];
     $("[data-datos]").innerHTML =
       // Las reseñas solo aparecen si hay; las de la barbería de ejemplo van marcadas
-      (s.resenas ? '<span class="rs-dato">' + ico("estrella") + "<span>" + String(s.rating).replace(".", ",") + " <small>· " + s.resenas + " reseñas" + (BS.esEjemplo() ? " (datos de ejemplo)" : "") + "</small></span></span>" : "") +
+      (function () {
+        var rep = BS.reputacion();
+        return rep.total ? '<span class="rs-dato">' + ico("estrella") + "<span>" + String(rep.promedio).replace(".", ",") + " <small>· " + rep.total +
+          (rep.ejemplo ? " reseñas (datos de ejemplo)" : rep.total === 1 ? " calificación de clientes" : " calificaciones de clientes") + "</small></span></span>" : "";
+      })() +
       '<span class="rs-dato">' + ico("ubicacion") + "<span>" + esc(s.direccion) + "</span></span>" +
       '<span class="rs-dato">' + ico("chat") + "<span>También podés reservar por WhatsApp <small>· responde al instante</small></span></span>" +
       '<div class="rs-horario">' + dias.map(function (d) {
@@ -161,6 +178,165 @@
     var badge = $("[data-fila-n]");
     badge.textContent = abierto && n ? String(n) : "";
     badge.title = n + " personas esperando";
+  }
+
+  /* ---------------- Tus citas: ver, mover, cancelar, calificar, repetir ----------------
+     Demo: se reconocen por el celular guardado en este navegador.
+     Servidor: cada reserva guarda su link firmado (id + token) en este navegador. */
+  var KEY_MIS = "barbersaas.misCitas";
+  function claveMis() { return KEY_MIS + ":" + ((BS.conexion && BS.conexion.slug) || ""); }
+  function guardarMia(id, token) {
+    var l = (leer(claveMis()) || []).filter(function (x) { return x.id !== id; });
+    l.unshift({ id: id, token: token });
+    escribirLS(claveMis(), l.slice(0, 10));
+  }
+  function cargarMisRemotas() {
+    var l = leer(claveMis()) || [];
+    if (!l.length) { remoto.mis = []; return Promise.resolve(); }
+    return Promise.all(l.map(function (x) {
+      return BS.conexion.estadoReserva(x.id, x.token).then(function (c) { return Object.assign({ token: x.token }, c); }, function () { return null; });
+    })).then(function (res) { remoto.mis = res.filter(Boolean); if (!tecleando() && capa.hidden) render(); });
+  }
+  function normRemota(c) {
+    return { id: c.id, token: c.token, servicio: c.servicio, barbero: c.barbero, servicioId: c.servicioId, barberoId: c.barberoId, inicio: c.inicio, dur: c.dur,
+      estado: c.estado, puedeCambiar: !!c.puedeCambiar, puedeCalificar: !!c.puedeCalificar, calificacion: c.calificacion, anticipo: c.anticipo, pagoUrl: c.pagoUrl };
+  }
+  function normDemo(c) {
+    var s = BS.servicio(c.servicio), b = BS.barbero(c.barbero);
+    return { id: c.id, servicio: s ? s.nombre : "Servicio", barbero: b ? b.nombre : "tu barbero", servicioId: c.servicio, barberoId: c.barbero, inicio: c.inicio, dur: c.dur,
+      estado: c.estado, puedeCambiar: BS.puedeCambiar(c), puedeCalificar: BS.puedeCalificar(c), calificacion: c.calificacion || null, anticipo: c.anticipo };
+  }
+  function misCitas() {
+    if (enServidor()) return (remoto.mis || []).map(normRemota);
+    var tel = String(R.tel || "").replace(/\D/g, "");
+    if (!/^3\d{9}$/.test(tel)) return [];
+    var cli = BS.get().clientes.filter(function (c) { return String(c.tel).replace(/\D/g, "") === tel; })[0];
+    return cli ? BS.get().citas.filter(function (c) { return c.cliente === cli.id; }).map(normDemo) : [];
+  }
+  function buscarMia(id) {
+    var c = misCitas().filter(function (x) { return x.id === id; })[0];
+    if (!c && remoto.cita && remoto.cita.id === id) c = normRemota(Object.assign({ token: remoto.token }, remoto.cita));
+    if (!c && !enServidor() && BS.cita(id)) c = normDemo(BS.cita(id));
+    return c || null;
+  }
+
+  function botonesCambio(c) {
+    if (!c || !(c.estado === "confirmada" || c.estado === "pendiente")) return "";
+    if (!c.puedeCambiar) return '<p class="rs-nota rs-nota--izq">Faltan menos de 2 horas: para cambios escribile a la barbería por WhatsApp.</p>';
+    return '<button class="btn btn--suave" data-rs="mover" data-id="' + esc(c.id) + '">' + ico("cal") + 'Cambiar hora</button><button class="btn btn--ghost" data-rs="cancelar-cita" data-id="' + esc(c.id) + '">Cancelar turno</button>';
+  }
+  function htmlCalificar(c) {
+    var n = R.calif[c.id] || 0;
+    return '<div class="rs-calif"><b>¿Cómo te fue con ' + esc(c.barbero) + "?</b><small>" + esc(c.servicio) + " · " + esc(U.diaRelativo(c.inicio)) + ". Tu calificación ayuda a otros clientes a escoger.</small>" +
+      '<div class="rs-estrellas" role="radiogroup" aria-label="Calificación de 1 a 5 estrellas">' + [1, 2, 3, 4, 5].map(function (i) {
+        return '<button class="rs-estrella' + (i <= n ? " is-on" : "") + '" role="radio" aria-checked="' + (i === n) + '" aria-label="' + i + (i === 1 ? " estrella" : " estrellas") + '" data-rs="estrella" data-id="' + esc(c.id) + '" data-n="' + i + '">' + ico("estrella") + "</button>";
+      }).join("") + "</div>" +
+      (n ? '<textarea class="rs-input" rows="2" maxlength="280" data-rs-calif="' + esc(c.id) + '" placeholder="Contale a la barbería qué te gustó (opcional)">' + esc(R.califTxt[c.id] || "") + "</textarea>" +
+        '<button class="btn" data-rs="calificar" data-id="' + esc(c.id) + '">Enviar calificación</button>' : "") + "</div>";
+  }
+  /** Arriba de la página: la próxima cita, la visita por calificar y «¿lo de siempre?». */
+  function htmlMisCitas() {
+    var mis = misCitas(), ahora = Date.now();
+    if (!mis.length) return "";
+    var proximas = mis.filter(function (c) { return (c.estado === "confirmada" || c.estado === "pendiente" || c.estado === "en-silla") && new Date(c.inicio).getTime() + c.dur * 60000 > ahora; })
+      .sort(function (a, b) { return new Date(a.inicio) - new Date(b.inicio); });
+    var porCalificar = mis.filter(function (c) { return c.puedeCalificar && ahora - new Date(c.inicio).getTime() < 30 * 86400000; })
+      .sort(function (a, b) { return new Date(b.inicio) - new Date(a.inicio); })[0];
+    var ultima = mis.filter(function (c) { return c.estado === "terminada" || (c.estado !== "cancelada" && c.estado !== "no-show" && new Date(c.inicio).getTime() < ahora); })
+      .sort(function (a, b) { return new Date(b.inicio) - new Date(a.inicio); })[0];
+    var html = proximas.slice(0, 2).map(function (c, i) {
+      var falta = c.anticipo && !c.anticipo.pagado;
+      return '<div class="rs-mia"><div class="rs-mia-cab"><span class="rs-mia-k">' + (i === 0 ? "Tu próxima cita" : "También tenés") + "</span>" +
+        (falta ? '<span class="rs-chip rs-chip--alerta">' + ico("reloj") + "Falta el anticipo</span>" : '<span class="rs-chip rs-chip--ok">' + ico("check") + "Confirmada</span>") + "</div>" +
+        "<b>" + esc(c.servicio) + " con " + esc(c.barbero) + "</b><span>" + esc(cap(U.diaRelativo(c.inicio))) + " · " + U.hora(c.inicio) + "</span>" +
+        '<div class="rs-mia-acc">' + botonesCambio(c) + (falta && c.pagoUrl ? '<a class="btn" href="' + esc(c.pagoUrl) + '">Pagar anticipo</a>' : "") + "</div></div>";
+    }).join("");
+    if (porCalificar) html += htmlCalificar(porCalificar);
+    if (!proximas.length && ultima && BS.servicio(ultima.servicioId)) {
+      html += '<button class="rs-repetir" data-rs="repetir" data-s="' + esc(ultima.servicioId) + '" data-b="' + esc(ultima.barberoId) + '">' + ico("ciclo") +
+        "<span><b>¿Lo de siempre?</b><small>" + esc(ultima.servicio) + " con " + esc(ultima.barbero) + " · elegí la hora y listo</small></span>" + ico("flecha") + "</button>";
+    }
+    return html ? '<section class="rs-mis" aria-label="Tus citas">' + html + "</section>" : "";
+  }
+
+  function limpiarSeleccion() { R.servicio = null; R.barbero = null; R.dia = null; R.min = null; }
+  function irAlPaso(selector) {
+    setTimeout(function () {
+      var el = cuerpo.querySelector(selector); if (!el) return;
+      window.scrollTo({ top: window.scrollY + el.getBoundingClientRect().top - 16, behavior: "smooth" });
+    }, 30);
+  }
+  function confirmarCambio() {
+    var cb = R.cambiando, btn = cuerpo.querySelector("[data-rs='confirmar-cambio']");
+    if (btn) { btn.disabled = true; btn.textContent = "Moviendo tu turno…"; }
+    if (enServidor()) {
+      BS.conexion.cambiarReserva(cb.id, cb.token, { fecha: U.claveDia(R.dia), min: R.min, barbero: R.barbero }).then(function (c) {
+        R.cambiando = null; R.movida = true; limpiarSeleccion();
+        remoto.cita = c; remoto.token = cb.token;
+        cargarMisRemotas(); render(); window.scrollTo({ top: 0, behavior: "smooth" });
+      }).catch(function (err) {
+        toast(err.message);
+        if (err.status === 409) { R.min = null; BS.conexion.recargarPublico().then(render, render); } else render();
+      });
+      return;
+    }
+    var c = BS.moverCita(cb.id, U.enMin(R.dia, R.min), R.barbero);
+    if (!c) { R.min = null; toast("Ese turno se acaba de ocupar. Elegí otro, porfa."); render(); return; }
+    R.cambiando = null; R.movida = true; R.confirmada = c.id; limpiarSeleccion();
+    render(); window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function pedirCancelar(id) {
+    var c = buscarMia(id); if (!c) return;
+    R.aCancelar = c;
+    var pagado = c.anticipo && c.anticipo.pagado;
+    capa.innerHTML = '<div class="rs-pago rs-confirmar" role="dialog" aria-modal="true" aria-labelledby="rs-cancelar-t"><h3 id="rs-cancelar-t">¿Cancelar tu turno?</h3>' +
+      "<p>" + esc(c.servicio) + " con " + esc(c.barbero) + ", " + esc(U.diaRelativo(c.inicio)) + " a las " + U.hora(c.inicio) + "</p>" +
+      (pagado ? "<p>Pagaste un anticipo de " + U.pesos(c.anticipo.monto) + ": hablalo con la barbería, normalmente queda como abono para tu próxima cita.</p>" : "") +
+      "<p>El turno queda libre y se le ofrece a otro cliente.</p>" +
+      '<div class="rs-acciones"><button class="btn" data-rs="cancelar-no">No, lo mantengo</button><button class="btn btn--ghost" data-rs="cancelar-si">Sí, cancelar</button></div></div>';
+    capa.hidden = false;
+    var b = capa.querySelector("[data-rs='cancelar-no']"); if (b) b.focus();
+  }
+  function cancelarSi() {
+    var c = R.aCancelar; R.aCancelar = null;
+    capa.hidden = true; capa.innerHTML = "";
+    if (!c) return;
+    if (enServidor()) {
+      BS.conexion.cancelarReserva(c.id, c.token).then(function (cita) {
+        if (remoto.cita && remoto.cita.id === c.id) remoto.cita = cita;
+        toast("Cancelaste tu turno. Ya quedó libre para otro cliente.", true);
+        cargarMisRemotas(); BS.conexion.recargarPublico().then(render, render);
+      }).catch(function (err) { toast(err.message); });
+      return;
+    }
+    BS.cancelarCita(c.id, "lo canceló desde su link");
+    if (R.confirmada === c.id) { R.confirmada = null; R.movida = false; }
+    toast("Cancelaste tu turno. Ya quedó libre para otro cliente.", true);
+    render();
+  }
+  function enviarCalificacion(id) {
+    var c = buscarMia(id), n = R.calif[id];
+    if (!c || !n) return;
+    var txt = (R.califTxt[id] || "").trim();
+    if (enServidor()) {
+      BS.conexion.calificarReserva(c.id, c.token, { estrellas: n, comentario: txt }).then(function (cita) {
+        if (remoto.cita && remoto.cita.id === id) remoto.cita = cita;
+        toast("¡Gracias! Tu calificación ya cuenta para " + (BS.get().shop.nombre || "la barbería") + ".", true);
+        cargarMisRemotas(); render();
+      }).catch(function (err) { toast(err.message); });
+      return;
+    }
+    BS.calificarCita(id, n, txt);
+    toast("¡Gracias! Tu calificación ya cuenta para " + BS.get().shop.nombre + ".", true);
+    render();
+  }
+  /** Llegó desde el buscador con servicio, día y hora elegidos: arranca con eso marcado. */
+  function preseleccion() {
+    var s = params.get("s"), d = params.get("d"), m = params.get("m"), b = params.get("bb");
+    if (!s || !BS.servicio(s)) return;
+    R.servicio = s; R.barbero = b && BS.barbero(b) ? b : "cualquiera";
+    if (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) { var p = d.split("-").map(Number); R.dia = new Date(p[0], p[1] - 1, p[2]); }
+    if (R.dia && m != null && BS.slotsLibres(R.dia, R.servicio, R.barbero).some(function (x) { return x.min === Number(m); })) R.min = Number(m);
   }
 
   /* ---------------- Reservar cita ---------------- */
@@ -174,6 +350,11 @@
     return out;
   }
 
+  /** Debajo del nombre del barbero: sus especialidades y su calificación real (si ya tiene). */
+  function textoBarbero(b) {
+    var rep = BS.reputacion(b.id), cal = rep.ejemplo ? String(rep.promedio).replace(".", ",") + " ★" : rep.total ? String(rep.promedio).replace(".", ",") + " ★ (" + rep.total + ")" : "";
+    return [(b.especialidades || []).join(" · "), cal].filter(Boolean).join(" · ") || (b.modo === "dueno" ? "Dueño" : "Barbero");
+  }
   function paso(n, titulo, estado, resumen, contenido) {
     return '<section class="rs-paso ' + estado + '" aria-labelledby="paso-' + n + '"><div class="rs-paso-cab"><span class="rs-paso-n">' + (estado.indexOf("is-hecho") >= 0 ? ico("check") : n) + "</span>" +
       '<h2 id="paso-' + n + '">' + titulo + "</h2>" + (resumen || "") + '</div><div class="rs-paso-cuerpo">' + contenido + "</div></section>";
@@ -183,13 +364,15 @@
     if (enServidor() && BS.conexion.noEncontrada) return '<div class="rs-ok"><h2>No encontramos esta barbería</h2><p>Revisá el link que te pasaron.</p></div>';
     if (enServidor() && remoto.cita) return htmlConfirmadaRemota();
     if (R.confirmada) return htmlConfirmada();
-    var st = BS.get();
-    var s1 = !!R.servicio, s2 = !!R.barbero, s3 = R.min != null && R.dia, s4 = R.datosOk;
+    var st = BS.get(), cb = R.cambiando;
+    var s1 = !!R.servicio, s2 = !!R.barbero, s3 = R.min != null && R.dia, s4 = cb ? true : R.datosOk;
     var srv = R.servicio ? BS.servicio(R.servicio) : null;
-    var html = "";
+    // Moviendo una cita: se avisa arriba; si no, arriba van las citas del cliente
+    var html = cb ? '<div class="rs-cambio">' + ico("cal") + "<div><b>Estás moviendo tu turno de " + esc(U.diaRelativo(cb.inicio)) + ", " + U.hora(cb.inicio) + "</b>" +
+      "<span>Elegí la nueva hora. Tu anticipo, si lo pagaste, sigue valiendo.</span></div>" + '<button class="btn btn--ghost btn--sm" data-rs="cambio-no">No cambiar</button></div>' : htmlMisCitas();
 
     html += paso(1, "¿Qué te vas a hacer?", s1 ? "is-hecho is-plegado" : "",
-      s1 ? '<button class="resumen" data-rs="editar" data-p="1">' + esc(srv.nombre) + " · " + U.pesos(srv.precio) + "</button>" : "",
+      s1 ? (cb ? '<span class="resumen">' + esc(srv.nombre) + "</span>" : '<button class="resumen" data-rs="editar" data-p="1">' + esc(srv.nombre) + " · " + U.pesos(srv.precio) + "</button>") : "",
       '<div class="rs-servicios">' + st.servicios.map(function (s) {
         return '<button class="rs-opcion' + (R.servicio === s.id ? " is-on" : "") + '" data-rs="servicio" data-id="' + s.id + '"><b>' + esc(s.nombre) + "</b><small>" + esc(s.desc || "") + " · " + s.dur + ' min</small><span class="precio">' + U.pesos(s.precio) + "</span></button>";
       }).join("") + "</div>");
@@ -199,7 +382,7 @@
       s2 ? '<button class="resumen" data-rs="editar" data-p="2">' + esc(bNombre) + "</button>" : "",
       '<div class="rs-barberos"><button class="rs-barbero rs-barbero--libre' + (R.barbero === "cualquiera" ? " is-on" : "") + '" data-rs="barbero" data-id="cualquiera"><span class="avatar"><span class="poste is-on"></span></span><b>El que esté libre</b><small>Más turnos disponibles</small></button>' +
       st.barberos.map(function (b) {
-        return '<button class="rs-barbero' + (R.barbero === b.id ? " is-on" : "") + '" data-rs="barbero" data-id="' + b.id + '"><span class="avatar">' + esc(U.iniciales(b.nombre)) + "</span><b>" + esc(b.nombre) + (b.alias ? ' <small style="display:inline">«' + esc(b.alias) + "»</small>" : "") + "</b><small>" + esc([(b.especialidades || []).join(" · ")].concat(BS.esEjemplo() ? [String(b.rating).replace(".", ",") + " ★"] : []).filter(Boolean).join(" · ") || (b.modo === "dueno" ? "Dueño" : "Barbero")) + "</small></button>";
+        return '<button class="rs-barbero' + (R.barbero === b.id ? " is-on" : "") + '" data-rs="barbero" data-id="' + b.id + '"><span class="avatar">' + esc(U.iniciales(b.nombre)) + "</span><b>" + esc(b.nombre) + (b.alias ? ' <small style="display:inline">«' + esc(b.alias) + "»</small>" : "") + "</b><small>" + esc(textoBarbero(b)) + "</small></button>";
       }).join("") + "</div>");
 
     var contenido3 = "";
@@ -222,6 +405,14 @@
     }
     html += paso(3, "¿Cuándo?", !(s1 && s2) ? "is-bloqueado" : s3 ? "is-hecho is-plegado" : "",
       s3 ? '<button class="resumen" data-rs="editar" data-p="3">' + esc(U.diaRelativo(R.dia).replace(/^el /, "")) + " · " + U.horaMin(R.min) + "</button>" : "", contenido3);
+
+    if (cb) {
+      var bN = R.barbero === "cualquiera" ? "El que esté libre" : R.barbero ? BS.barbero(R.barbero).nombre : "";
+      html += paso(4, "Confirmá el cambio", !s3 ? "is-bloqueado" : "", "", s3 ? '<div class="rs-resumen"><div><span>Antes</span><b class="rs-tachado">' + esc(cap(U.diaRelativo(cb.inicio))) + " · " + U.hora(cb.inicio) + "</b></div>" +
+        "<div><span>Ahora</span><b>" + esc(cap(U.diaRelativo(U.enMin(R.dia, R.min)))) + " · " + U.horaMin(R.min) + "</b></div><div><span>Con</span><b>" + esc(bN) + "</b></div></div>" +
+        '<button class="btn btn--lg rs-cta" data-rs="confirmar-cambio">Mover mi turno</button>' : "");
+      return html;
+    }
 
     var contenido4 = '<div class="rs-form"><div class="rs-campo"><label for="rs-nombre">Tu nombre</label><input class="rs-input" id="rs-nombre" data-rs-campo="nombre" autocomplete="name" value="' + esc(R.nombre) + '"' + (R.errores.nombre ? ' aria-invalid="true"' : "") + ' placeholder="Como te dicen en la barbería"></div>' +
       '<div class="rs-campo"><label for="rs-tel">Celular con WhatsApp</label><div class="rs-tel"><span>+57</span><input class="rs-input" id="rs-tel" data-rs-campo="tel" inputmode="numeric" autocomplete="tel-national" maxlength="12" value="' + esc(R.tel) + '"' + (R.errores.tel ? ' aria-invalid="true"' : "") + ' placeholder="300 123 4567"></div>' +
@@ -264,12 +455,13 @@
     var auto = BS.autoPorClave("confirmacion");
     var msg = auto && auto.activa ? BS.render(auto.plantilla, BS.varsCita(c)) : "";
     var abono = c.anticipo && c.anticipo.pagado ? c.anticipo.monto : 0;
-    return '<div class="rs-ok"><span class="rs-ok-ico">' + ico("check") + "</span><h2>¡Listo, " + esc(U.primerNombre(cli.nombre)) + "!</h2><p>Tu turno quedó reservado. Te esperamos en " + esc(BS.get().shop.nombre) + ".</p>" +
+    return '<div class="rs-ok"><span class="rs-ok-ico">' + ico("check") + "</span><h2>" + (R.movida ? "¡Listo, movimos tu turno!" : "¡Listo, " + esc(U.primerNombre(cli.nombre)) + "!") + "</h2><p>" +
+      (R.movida ? "Te llega la confirmación con la hora nueva por WhatsApp." : "Tu turno quedó reservado. Te esperamos en " + esc(BS.get().shop.nombre) + ".") + "</p>" +
       '<div class="rs-resumen"><div><span>Servicio</span><b>' + esc(srv.nombre) + "</b></div><div><span>Barbero</span><b>" + esc(b.nombre) + "</b></div>" +
       "<div><span>Día</span><b>" + esc(U.fechaLarga(c.inicio)) + "</b></div><div><span>Hora</span><b>" + U.hora(c.inicio) + "</b></div>" +
       (abono ? "<div><span>Anticipo pagado</span><b>" + U.pesos(abono) + " · " + BS.MEDIOS[c.anticipo.medio] + '</b></div><div class="total"><span>Pagás en la barbería</span><b>' + U.pesos(c.precio - abono) + "</b></div>" : '<div class="total"><span>Pagás en la barbería</span><b>' + U.pesos(c.precio) + "</b></div>") + "</div>" +
       (msg ? '<div class="rs-wa"><p class="rs-wa-k">' + ico("chat") + 'Te llegó esto a tu WhatsApp</p><div class="msg msg--in"><span class="msg-auto">' + ico("rayo") + "Automático</span>" + esc(msg) + '<span class="msg-meta">' + U.hora(new Date()) + "</span></div></div>" : "") +
-      '<div class="rs-acciones"><button class="btn" data-rs="ics">' + ico("cal") + 'Agregar a mi calendario</button><button class="btn btn--ghost" data-rs="otra">Hacer otra reserva</button>' +
+      '<div class="rs-acciones"><button class="btn" data-rs="ics">' + ico("cal") + "Agregar a mi calendario</button>" + botonesCambio(normDemo(c)) + '<button class="btn btn--ghost" data-rs="otra">Hacer otra reserva</button>' +
       '<a class="btn btn--suave" href="../app/index.html' + (BS.esEjemplo() ? "?demo=1" : "") + '#/agenda" target="_blank" rel="noopener">Ver la cita en el panel de la barbería (demo)' + ico("flecha") + "</a></div></div>";
   }
 
@@ -349,10 +541,11 @@
   }
   function guardarYo() { escribirLS(KEY_YO, { nombre: R.nombre.trim(), tel: R.tel.replace(/\D/g, "") }); }
 
-  function toast(texto) {
+  function toast(texto, ok) {
     var el = document.createElement("div");
     el.className = "toast";
-    el.innerHTML = '<span class="toast-ico toast-ico--alerta">' + ico("reloj") + "</span><div><small>Ojo</small><p>" + esc(texto) + "</p></div>";
+    el.setAttribute("role", "status");
+    el.innerHTML = '<span class="toast-ico toast-ico--' + (ok ? "ok" : "alerta") + '">' + ico(ok ? "check" : "reloj") + "</span><div><small>" + (ok ? "Listo" : "Ojo") + "</small><p>" + esc(texto) + "</p></div>";
     toastsEl.appendChild(el);
     setTimeout(function () { el.classList.add("is-saliendo"); setTimeout(function () { el.remove(); }, 320); }, 4500);
   }
@@ -433,7 +626,7 @@
         if (crearReserva(null)) { render(); window.scrollTo({ top: 0, behavior: "smooth" }); } return;
       case "ics": descargarICS(); return;
       case "otra":
-        R.confirmada = null; R.servicio = null; R.barbero = null; R.min = null; R.dia = null; R.datosOk = false;
+        R.confirmada = null; R.servicio = null; R.barbero = null; R.min = null; R.dia = null; R.datosOk = false; R.movida = false; R.cambiando = null;
         if (remoto.cita) { remoto.cita = null; clearTimeout(remoto.sondeoCita); history.replaceState(null, "", location.pathname + "?b=" + encodeURIComponent(BS.conexion.slug)); BS.conexion.recargarPublico().then(render, render); }
         break;
       case "modo": R.modo = el.getAttribute("data-m"); break;
@@ -467,6 +660,29 @@
         R.teToca = null;
         if (enServidor()) { remoto.fila = null; escribirLS(claveFila(), null); clearTimeout(remoto.sondeoFila); }
         break;
+      /* Tus citas */
+      case "mover":
+        var cm = buscarMia(el.getAttribute("data-id")); if (!cm) return;
+        R.cambiando = cm; R.modo = "cita"; R.confirmada = null; R.movida = false;
+        if (remoto.cita) { remoto.cita = null; clearTimeout(remoto.sondeoCita); }
+        R.servicio = BS.servicio(cm.servicioId) ? cm.servicioId : null;
+        R.barbero = BS.barbero(cm.barberoId) ? cm.barberoId : "cualquiera"; R.min = null;
+        R.dia = new Date(cm.inicio); R.dia.setHours(0, 0, 0, 0); // arranca en el día de su cita
+        render(); window.scrollTo({ top: 0, behavior: "smooth" }); return;
+      case "cambio-no": R.cambiando = null; limpiarSeleccion(); break;
+      case "confirmar-cambio": confirmarCambio(); return;
+      case "cancelar-cita": pedirCancelar(el.getAttribute("data-id")); return;
+      case "cancelar-no": R.aCancelar = null; capa.hidden = true; capa.innerHTML = ""; return;
+      case "cancelar-si": cancelarSi(); return;
+      case "estrella": R.calif[el.getAttribute("data-id")] = Number(el.getAttribute("data-n")); break;
+      case "calificar": enviarCalificacion(el.getAttribute("data-id")); return;
+      case "repetir":
+        R.modo = "cita"; R.confirmada = null; R.movida = false; R.cambiando = null;
+        if (remoto.cita) { remoto.cita = null; clearTimeout(remoto.sondeoCita); }
+        R.servicio = BS.servicio(el.getAttribute("data-s")) ? el.getAttribute("data-s") : null;
+        R.barbero = R.servicio && BS.barbero(el.getAttribute("data-b")) ? el.getAttribute("data-b") : R.servicio ? "cualquiera" : null;
+        R.dia = null; R.min = null;
+        render(); irAlPaso("#paso-3"); return;
       default: return;
     }
     render();
@@ -483,7 +699,8 @@
       R.filaId = null;
       var guardada = leer(claveFila());
       if (guardada && guardada.id) { remoto.fila = { id: guardada.id, token: guardada.token, datos: null }; R.modo = "fila"; sondearFila(); }
-      if (params.get("cita") && params.get("t")) { R.modo = "cita"; cargarCitaRemota(params.get("cita"), params.get("t"), 0); }
+      if (params.get("cita") && params.get("t")) { R.modo = "cita"; guardarMia(params.get("cita"), params.get("t")); cargarCitaRemota(params.get("cita"), params.get("t"), 0); }
+      cargarMisRemotas();
     } else {
       var mia = miFila(); if (mia) R.teTocaCliente = mia.cliente;
       if (R.filaId && !mia) { R.filaId = null; escribirLS(KEY_FILA, null); }
@@ -494,7 +711,9 @@
       var el = e.target.closest("[data-rs]");
       if (el) { e.preventDefault(); accion(el); }
     });
+    if (!params.get("cita")) preseleccion();
     document.addEventListener("input", function (e) {
+      if (e.target.hasAttribute("data-rs-calif")) { R.califTxt[e.target.getAttribute("data-rs-calif")] = e.target.value; return; }
       var k = e.target.getAttribute("data-rs-campo");
       if (k === "nombre") R.nombre = e.target.value;
       if (k === "tel") R.tel = e.target.value;
@@ -504,12 +723,12 @@
     });
     BS.subscribe(function () {
       var activo = document.activeElement;
-      if (activo && activo.matches && activo.matches("input")) { pintarMarca(); return; }
+      if (activo && activo.matches && activo.matches("input, textarea")) { pintarMarca(); return; }
       if (!capa.hidden) return;
       render();
     });
     render();
-    setInterval(function () { if (!(document.activeElement && document.activeElement.matches("input"))) render(); }, 30000);
+    setInterval(function () { if (!tecleando() && capa.hidden) render(); }, 30000);
   }
   function arrancar() {
     (BS.listo || Promise.resolve()).then(boot, function (err) {

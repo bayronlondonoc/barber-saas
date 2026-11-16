@@ -147,6 +147,7 @@
   function enviar(texto) {
     texto = String(texto || "").trim();
     if (!texto || ocupado) return;
+    if (APP.marcarPaso) APP.marcarPaso("proboAsistente"); // primeros pasos: ya probó el asistente
     if (enServidor()) enviarServidor(texto); else enviarLocal(texto);
   }
 

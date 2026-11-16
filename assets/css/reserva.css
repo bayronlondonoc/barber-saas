@@ -172,3 +172,47 @@ body.reserva { min-height: 100vh; }
   .rs-barberos { grid-template-columns: repeat(2, 1fr); }
   .rs-turno-pos { font-size: 92px; }
 }
+
+/* ---------- Tus citas: próxima cita, calificar, repetir, mover ---------- */
+.rs-mis { display: flex; flex-direction: column; gap: 10px; margin-bottom: 8px; }
+.rs-mia { display: flex; flex-direction: column; gap: 4px; padding: 16px; border-radius: 18px; background: linear-gradient(160deg, #1f1615, #161414 70%); box-shadow: inset 0 0 0 1px rgba(255, 75, 43, 0.28); }
+.rs-mia-cab { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+.rs-mia-k { font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--humo); }
+.rs-mia > b { font-size: 16.5px; font-weight: 650; }
+.rs-mia > span { color: var(--humo); font-size: 14.5px; }
+.rs-mia-acc { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.rs-mia-acc .btn { flex: 1 1 auto; justify-content: center; }
+.rs-chip { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.rs-chip .ic { width: 13px; height: 13px; }
+.rs-chip--ok { background: var(--ok-suave); color: var(--ok); }
+.rs-chip--alerta { background: var(--alerta-suave); color: var(--alerta); }
+.rs-calif { display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: 18px; background: #1a1818; box-shadow: inset 0 0 0 1px var(--linea); text-align: left; width: 100%; }
+.rs-calif b { font-size: 16px; font-weight: 650; }
+.rs-calif small { color: var(--humo); font-size: 13px; line-height: 1.4; }
+.rs-calif textarea.rs-input { height: auto; min-height: 64px; padding: 12px 14px; line-height: 1.45; resize: vertical; }
+.rs-estrellas { display: flex; gap: 4px; margin: 4px 0; }
+.rs-estrella { width: 46px; height: 46px; border-radius: 12px; display: grid; place-items: center; color: var(--humo-2); transition: color 0.15s, transform 0.15s; }
+.rs-estrella .ic { width: 30px; height: 30px; }
+.rs-estrella:hover { transform: scale(1.08); }
+.rs-estrella.is-on { color: #ffc14d; }
+.rs-estrella.is-on .ic { fill: currentColor; }
+.rs-gracias { display: inline-flex; align-items: center; gap: 6px; color: var(--espuma) !important; }
+.rs-gracias .ic { width: 18px; height: 18px; color: #ffc14d; fill: currentColor; }
+.rs-repetir { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; width: 100%; padding: 14px 16px; border-radius: 18px; text-align: left; background: #1a1818; box-shadow: inset 0 0 0 1px var(--linea-2); transition: background 0.2s; }
+.rs-repetir:hover { background: #221e1d; }
+.rs-repetir > .ic { width: 22px; height: 22px; color: var(--neon-2); }
+.rs-repetir b { display: block; font-size: 15.5px; font-weight: 650; }
+.rs-repetir small { display: block; font-size: 13px; color: var(--humo); }
+.rs-cambio { display: grid; grid-template-columns: auto 1fr; gap: 10px 12px; align-items: start; padding: 14px 16px; border-radius: 18px; background: var(--info-suave); box-shadow: inset 0 0 0 1px rgba(122, 162, 255, 0.35); margin-bottom: 6px; }
+.rs-cambio > .ic { width: 20px; height: 20px; color: var(--info); margin-top: 2px; }
+.rs-cambio b { display: block; font-size: 14.5px; }
+.rs-cambio span { display: block; font-size: 13px; color: var(--humo); margin-top: 2px; }
+.rs-cambio .btn { grid-column: 2; justify-self: start; }
+.rs-tachado { text-decoration: line-through; color: var(--humo); font-weight: 500; }
+.rs-nota--izq { text-align: left; margin: 0; }
+.rs-pago.rs-confirmar { align-items: stretch; text-align: left; gap: 10px; background: #161414; color: var(--espuma); box-shadow: 0 0 0 1px var(--linea-2), 0 30px 80px -20px rgba(0, 0, 0, 0.8); }
+.rs-pago.rs-confirmar h3 { color: var(--espuma); }
+.rs-pago.rs-confirmar p { color: var(--humo); }
+.rs-confirmar .rs-acciones { margin-top: 6px; }
+.rs-mas-barberias { display: inline-flex; align-items: center; gap: 6px; }
+.rs-mas-barberias .ic { width: 14px; height: 14px; }

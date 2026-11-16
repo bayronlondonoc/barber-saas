@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="es-CO">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Buscar barbería · Barber SaaS</title>
+  <meta name="description" content="Encontrá barbería en Medellín con turno hoy: precios, calificaciones de clientes reales y reserva en un minuto, sin escribir ni esperar.">
+  <meta name="theme-color" content="#0c0b0b">
+  <link rel="icon" href="../assets/img/favicon.svg?v=20261109" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="../assets/css/base.css?v=202611161">
+  <link rel="stylesheet" href="../assets/css/explorar.css?v=202611161">
+  <script defer src="../assets/js/store.js?v=202611161"></script>
+  <script defer src="../assets/js/explorar.js?v=202611161"></script>
+</head>
+<body class="ex">
+  <a class="saltar" href="#resultados">Saltar a las barberías</a>
+  <header class="ex-barra">
+    <a class="logo" href="../index.html" title="Barber SaaS"><span class="logo-mark"><span class="poste"></span></span><span><b>Barber</b><span>SaaS</span></span></a>
+    <a class="btn btn--suave btn--sm" href="../app/index.html?nuevo=1">¿Tenés barbería? Registrala</a>
+  </header>
+
+  <main class="ex-main">
+    <section class="ex-hero">
+      <p class="eyebrow"><span class="punto"></span>Medellín · turnos en vivo</p>
+      <h1>Tu próximo corte, <span>sin escribir ni esperar.</span></h1>
+      <p class="ex-sub">Mirá qué barberías tienen turno hoy, cuánto cobran y cómo las califican sus clientes. Tocás la hora y reservás en un minuto.</p>
+      <div class="ex-filtros" role="search">
+        <label class="ex-buscar">
+          <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+          <input type="search" data-ex="q" placeholder="Barbería o barrio" aria-label="Buscar por nombre de barbería o barrio" autocomplete="off">
+        </label>
+        <div class="ex-chips" role="group" aria-label="¿Qué te vas a hacer?" data-ex-servicios></div>
+        <label class="ex-ya"><span class="switch"><input type="checkbox" data-ex="ya"><span></span></span><span><b>Corte ya</b><small>Silla libre en menos de 45 min</small></span></label>
+      </div>
+    </section>
+
+    <section class="ex-resultados" id="resultados" tabindex="-1" aria-live="polite">
+      <p class="ex-conteo" data-ex-conteo>Buscando turnos…</p>
+      <div class="ex-lista" data-ex-lista></div>
+    </section>
+    <p class="ex-nota" data-ex-nota hidden></p>
+  </main>
+
+  <footer class="ex-pie">
+    <p>Los turnos se actualizan solos. Lo que reservás llega directo a la agenda de la barbería.</p>
+    <p><a href="../index.html">Barber SaaS</a> · <a href="../app/index.html?nuevo=1">Registrá tu barbería</a></p>
+  </footer>
+</body>
+</html>

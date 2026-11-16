@@ -99,7 +99,7 @@ const TIPOS = {
   ".jpg": "image/jpeg", ".ico": "image/x-icon", ".txt": "text/plain; charset=utf-8", ".woff2": "font/woff2",
 };
 // Solo se publica el sitio: nunca el código del servidor, la base de datos ni el .env
-const PUBLICOS = new Set(["", "index.html", "robots.txt", "app", "reserva", "assets", "pago-simulado"]);
+const PUBLICOS = new Set(["", "index.html", "robots.txt", "app", "reserva", "explorar", "assets", "pago-simulado"]);
 
 function servirEstatico(req, res, rutaUrl) {
   let ruta = decodeURIComponent(rutaUrl);

@@ -440,7 +440,7 @@
         horario: d.horario || horarioBase(),
         anticipo: { activo: true, tipo: "fijo", valor: 10000, porcentaje: 25 },
         medios: { nequi: true, breb: true, daviplata: true, pse: true, tarjeta: true, efectivo: true },
-        tono: "paisa", rating: 5, resenas: 0, linkResena: "", onboarded: d.onboarded !== false
+        tono: "paisa", rating: 5, resenas: 0, linkResena: "", onboarded: d.onboarded !== false, enExplorar: true
       },
       barberos: d.barberos && d.barberos.length ? d.barberos : [{ id: "b1", nombre: dueno, alias: "", rol: "Dueño", modo: "dueno", comision: 1, alquiler: 0, especialidades: [], rating: 5, tel: d.whatsapp || "" }],
       servicios: d.servicios && d.servicios.length ? d.servicios : serviciosBase(), clientes: [], citas: [], fila: [], autos: autosBase(false),
@@ -807,6 +807,77 @@
     c.estado = "no-show";
     if (BS.emit) BS.emit("cita.noshow", { cita: c });
     commit("cita", c);
+  };
+
+  /* ---------------- Lo que el cliente hace solo desde su link ---------------- */
+  BS.LIMITE_CAMBIO_MIN = 120; // hasta 2 horas antes puede cambiar o cancelar por su cuenta
+  /** ¿El cliente todavía puede mover o cancelar esta cita sin escribirle a la barbería? */
+  BS.puedeCambiar = function (c) {
+    return !!c && (c.estado === "confirmada" || c.estado === "pendiente") && new Date(c.inicio).getTime() - Date.now() >= BS.LIMITE_CAMBIO_MIN * 60000;
+  };
+  /** ¿Ya puede calificar? Cuando el servicio terminó y todavía no calificó. */
+  BS.puedeCalificar = function (c) {
+    return !!c && !c.calificacion && c.estado !== "cancelada" && c.estado !== "no-show" && (c.estado === "terminada" || BS.finCita(c) <= new Date());
+  };
+  /** Mueve una cita a otra hora (y barbero si hace falta). Devuelve null si el turno ya no está libre. */
+  BS.moverCita = function (id, inicio, barberoId) {
+    var c = BS.cita(id); if (!c) return null;
+    var dia = new Date(inicio), min = minDelDia(dia);
+    var previo = c.estado; c.estado = "cancelada"; // su propio turno no cuenta como ocupado
+    var slot = BS.slotsLibres(dia, c.servicio, barberoId || "cualquiera").filter(function (s) { return s.min === min; })[0];
+    c.estado = previo;
+    if (!slot) return null;
+    var antes = c.inicio;
+    c.inicio = dia.toISOString();
+    c.barbero = barberoId && barberoId !== "cualquiera" ? barberoId : slot.barberos.indexOf(c.barbero) >= 0 ? c.barbero : slot.barbero;
+    c.recordatorio = false; c.confirmoCliente = false;
+    var cli = BS.cliente(c.cliente);
+    BS.actividad({ tipo: "cal", toast: true, texto: (cli ? nombreCorto(cli.nombre) : "Un cliente") + " movió su turno de " + diaRelativo(antes) + " " + hora(antes) + " a " + diaRelativo(c.inicio) + " " + hora(c.inicio) });
+    if (BS.emit) BS.emit("cita.movida", { cita: c });
+    commit("cita", c);
+    return c;
+  };
+  /** El cliente califica su visita (1 a 5 estrellas). Alimenta la calificación real de la barbería y del barbero. */
+  BS.calificarCita = function (id, estrellas, comentario) {
+    var c = BS.cita(id); if (!c) return null;
+    var n = Math.max(1, Math.min(5, Math.round(Number(estrellas) || 0)));
+    c.calificacion = { estrellas: n, comentario: String(comentario || "").trim().slice(0, 280), fecha: new Date().toISOString() };
+    var cli = BS.cliente(c.cliente), b = BS.barbero(c.barbero);
+    BS.actividad({ tipo: "estrella", toast: true, texto: (cli ? nombreCorto(cli.nombre) : "Un cliente") + " calificó con " + n + " ★ su visita con " + (b ? b.nombre : "tu barbero") + (c.calificacion.comentario ? ": «" + c.calificacion.comentario + "»" : "") });
+    var a = BS.autoPorClave("resena"); if (a) a.stats.resultados++;
+    commit("cita", c);
+    return c;
+  };
+  /**
+   * Calificación real: promedio de lo que calificaron los clientes (de la barbería o de un barbero).
+   * La barbería de ejemplo usa sus números inventados, marcados como ejemplo en la página.
+   */
+  BS.reputacion = function (barberoId, est) {
+    est = est || BS.get();
+    if (!barberoId && est.reputacion) return est.reputacion; // el estado público ya viene calculado
+    var bp = barberoId ? porId(est.barberos, barberoId) : null;
+    if (bp && bp.reputacion) return bp.reputacion;
+    if (est.ejemplo) return barberoId ? { promedio: bp ? bp.rating : 5, total: 0, ejemplo: true } : { promedio: est.shop.rating, total: est.shop.resenas, ejemplo: true };
+    var cal = (est.citas || []).filter(function (c) { return c.calificacion && (!barberoId || c.barbero === barberoId); });
+    var suma = cal.reduce(function (s, c) { return s + c.calificacion.estrellas; }, 0);
+    return { promedio: cal.length ? Math.round((suma / cal.length) * 10) / 10 : 0, total: cal.length };
+  };
+  /** Lo que muestra el buscador de barberías: precio desde, calificación y los próximos turnos libres. */
+  BS.resumenExplorar = function () {
+    var st = BS.get(), s = st.shop, principal = st.servicios[0], proximos = [];
+    for (var i = 0; i < 5 && proximos.length < 4; i++) {
+      var d = addDias(hoy0(), i);
+      BS.slotsLibres(d, principal.id, "cualquiera", 30).slice(0, 4 - proximos.length).forEach(function (sl) {
+        proximos.push({ fecha: BS.util.claveDia(d), min: sl.min, dia: i });
+      });
+    }
+    var ya = proximos.filter(function (p) { return p.dia === 0 && p.min - ahoraMin() <= 45; })[0] || null;
+    return {
+      nombre: s.nombre, barrio: s.barrio, direccion: s.direccion, abierto: BS.abiertoAhora(), horarioHoy: BS.horario(new Date()),
+      reputacion: BS.reputacion(), desde: Math.min.apply(null, st.servicios.map(function (x) { return x.precio; })),
+      servicios: st.servicios.map(function (x) { return { id: x.id, nombre: x.nombre, precio: x.precio, dur: x.dur }; }),
+      barberos: st.barberos.length, principal: principal.id, proximos: proximos, ya: ya, ejemplo: !!st.ejemplo
+    };
   };
 
   BS.unirseFila = function (d) {

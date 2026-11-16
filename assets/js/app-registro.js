@@ -242,6 +242,7 @@
     if (!el) return;
     e.preventDefault();
     var acc = el.getAttribute("data-cp"), msg = mensajeCliente();
+    if (APP.marcarPaso) APP.marcarPaso("compartio"); // primeros pasos: ya mandó (o copió) su link
     if (acc === "copiar") copiar(msg);
     if (acc === "compartir") {
       if (navigator.share && /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)) navigator.share({ title: BS.get().shop.nombre, text: msg }).catch(function () {});
@@ -326,6 +327,7 @@
       '<p class="reg-sub">Tu agenda arrancó vacía, lista para las primeras reservas. Ahora viene lo importante: <b>que tus clientes tengan tu link</b>. Ellos reservan solos y cada cita cae directo en tu agenda.</p>' +
       '<div class="reg-resumen"><span>' + ico("tijeras") + st.servicios.length + (st.servicios.length === 1 ? " servicio" : " servicios") + "</span><span>" + ico("usuario") + st.barberos.length + (st.barberos.length === 1 ? " barbero" : " barberos") + "</span><span>" + ico("reloj") + dias + (dias === 1 ? " día" : " días") + " a la semana</span><span>" + ico("rayo") + "12 automatizaciones listas</span></div>" +
       compartirHTML() +
+      '<p class="reg-explorar">' + ico("web") + '<span>Tu barbería también aparece en <a class="link" href="../explorar/" target="_blank" rel="noopener">Explorar</a>, el buscador de Barber SaaS, para que te encuentren clientes nuevos. Lo apagás en Ajustes cuando querás.</span></p>' +
       '<div class="reg-pie"><span></span><button type="button" class="btn btn--lg" data-reg="ir-panel">Ir a mi agenda' + ico("flecha", "flecha") + "</button></div></div>" +
       '<div class="reg-tel-marco" aria-label="Vista previa de tu página de reservas"><span class="reg-tel-k">Así ve tu cliente la página</span><div class="reg-tel-pantalla"><iframe src="' + esc(enServidor() ? BS.linkReservas() : "../reserva/index.html") + '" title="Tu página de reservas, como la ve el cliente" loading="lazy"></iframe></div></div></div>';
   }

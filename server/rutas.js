@@ -75,6 +75,8 @@ function citaPublica(barberiaId, citaId) {
     const pend = c.anticipo && !c.anticipo.pagado ? uno("SELECT url FROM pagos WHERE barberia_id = ? AND cita_id = ? AND estado = 'pendiente' ORDER BY creado DESC LIMIT 1", barberiaId, c.id) : null;
     return {
       id: c.id, estado: c.estado, inicio: c.inicio, dur: c.dur, precio: c.precio, pagoUrl: pend ? pend.url : null,
+      servicioId: c.servicio, barberoId: c.barbero, puedeCambiar: BS.puedeCambiar(c), puedeCalificar: BS.puedeCalificar(c),
+      calificacion: c.calificacion ? { estrellas: c.calificacion.estrellas, comentario: c.calificacion.comentario } : null,
       servicio: srv.nombre, barbero: b.nombre, cliente: BS.util.primerNombre(cli.nombre),
       anticipo: c.anticipo ? { monto: c.anticipo.monto, pagado: !!c.anticipo.pagado, medio: c.anticipo.medio } : null,
       mensaje: a && a.activa ? BS.render(a.plantilla, vars) : "",
@@ -137,6 +139,9 @@ ruta("GET", /^\/api\/estado$/, (req) => estadoActual(exigirUsuario(req).barberia
 ruta("POST", /^\/api\/sync$/, (req, res, p, cuerpo) => {
   const u = exigirUsuario(req);
   nucleo.transaccion(u.barberia_id, (BS, ctx) => nucleo.aplicarParche(BS, ctx, cuerpo.parche));
+  // Cambió la barbería (registro, horario, servicios, equipo, aparecer en Explorar): el buscador se renueva ya
+  const p2 = cuerpo.parche || {}, c2 = p2.colecciones || {};
+  if ((p2.objetos && p2.objetos.shop) || c2.servicios || c2.barberos || c2.citas) cacheExplorar.t = 0;
   return estadoActual(u.barberia_id);
 }, { cuerpo: true });
 
@@ -211,6 +216,27 @@ ruta("PUT", /^\/api\/integraciones$/, (req, res, p, cuerpo) => {
   return { ok: true, integraciones: integraciones(u.barberia_id) };
 }, { cuerpo: true });
 
+/* ---------------- Público: buscador de barberías (motor de reservas) ---------------- */
+// Va antes de /publico/:slug, que si no lo tomaría como el nombre de una barbería
+let cacheExplorar = { t: 0, datos: null };
+ruta("GET", /^\/api\/publico\/explorar$/, () => {
+  if (cacheExplorar.datos && Date.now() - cacheExplorar.t < 30000) return cacheExplorar.datos;
+  const barberias = [];
+  for (const f of nucleo.todasLasBarberias()) {
+    try {
+      // Solo las que quieren aparecer, ya configuradas y con datos reales (nunca las de ejemplo)
+      const r = nucleo.leer(f.id, (BS) => {
+        const st = BS.get();
+        return st.shop.enExplorar && st.shop.onboarded !== false && !st.ejemplo && st.servicios.length && st.barberos.length ? BS.resumenExplorar() : null;
+      });
+      if (r) barberias.push(Object.assign({ slug: f.slug }, r));
+    } catch (e) { console.warn("[explorar] " + f.slug + ":", e.message); }
+  }
+  barberias.sort((a, b) => (b.ya ? 1 : 0) - (a.ya ? 1 : 0) || b.reputacion.total - a.reputacion.total || a.nombre.localeCompare(b.nombre));
+  cacheExplorar = { t: Date.now(), datos: { barberias, generado: new Date().toISOString() } };
+  return cacheExplorar.datos;
+}, { publico: true });
+
 /* ---------------- Público: reservas y fila ---------------- */
 ruta("GET", /^\/api\/publico\/([\w-]+)$/, (req, res, p) => {
   const b = barberiaPublica(p[1]);
@@ -265,6 +291,62 @@ ruta("GET", /^\/api\/publico\/([\w-]+)\/reservas\/([\w-]+)$/, (req, res, p, c, u
   if (!util.iguales(firmar(p[2]), url.searchParams.get("t") || "")) throw new ErrorHTTP(404, "No encontramos esa reserva.");
   return citaPublica(b.id, p[2]);
 }, { publico: true });
+
+/* ---- El cliente maneja su cita desde su link firmado: mover, cancelar, calificar ---- */
+function barberiaDeLaCita(p, url) {
+  const b = barberiaPublica(p[1]);
+  if (!util.iguales(firmar(p[2]), url.searchParams.get("t") || "")) throw new ErrorHTTP(404, "No encontramos esa reserva.");
+  return b;
+}
+const MSJ_TARDE = "Faltan menos de 2 horas para tu turno: para cambiarlo o cancelarlo escribile a la barbería por WhatsApp.";
+ruta("POST", /^\/api\/publico\/([\w-]+)\/reservas\/([\w-]+)\/cancelar$/, (req, res, p, cuerpo, url) => {
+  util.limitar(req, "cita-cliente", 20, 60000);
+  const b = barberiaDeLaCita(p, url);
+  nucleo.transaccion(b.id, (BS) => {
+    const c = BS.cita(p[2]);
+    if (!c) throw new ErrorHTTP(404, "No encontramos esa reserva.");
+    if (c.estado === "cancelada") return;
+    if (!BS.puedeCambiar(c)) throw new ErrorHTTP(409, MSJ_TARDE);
+    BS.cancelarCita(c.id, "lo canceló desde su link");
+  });
+  cacheExplorar.t = 0; // se liberó un turno
+  return citaPublica(b.id, p[2]);
+}, { cuerpo: true, publico: true });
+ruta("POST", /^\/api\/publico\/([\w-]+)\/reservas\/([\w-]+)\/cambiar$/, (req, res, p, cuerpo, url) => {
+  util.limitar(req, "cita-cliente", 20, 60000);
+  const b = barberiaDeLaCita(p, url);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(cuerpo.fecha || ""))) throw new ErrorHTTP(400, "Fecha inválida.");
+  const min = Number(cuerpo.min);
+  if (!Number.isInteger(min) || min < 0 || min > 1440) throw new ErrorHTTP(400, "Hora inválida.");
+  nucleo.transaccion(b.id, (BS) => {
+    const U = BS.util, c = BS.cita(p[2]);
+    if (!c) throw new ErrorHTTP(404, "No encontramos esa reserva.");
+    if (!BS.puedeCambiar(c)) throw new ErrorHTTP(409, MSJ_TARDE);
+    const [a, m, d] = cuerpo.fecha.split("-").map(Number);
+    const dia = new Date(a, m - 1, d);
+    if (U.diasEntre(new Date(), dia) < 0 || U.diasEntre(new Date(), dia) > 60) throw new ErrorHTTP(400, "Elegí una fecha de los próximos días.");
+    const barbero = cuerpo.barbero && cuerpo.barbero !== "cualquiera" ? String(cuerpo.barbero) : "cualquiera";
+    if (barbero !== "cualquiera" && !BS.barbero(barbero)) throw new ErrorHTTP(400, "Ese barbero no existe.");
+    if (!BS.moverCita(c.id, U.enMin(dia, min), barbero)) throw new ErrorHTTP(409, "Ese turno se acaba de ocupar. Elegí otro, porfa.");
+  });
+  cacheExplorar.t = 0;
+  return citaPublica(b.id, p[2]);
+}, { cuerpo: true, publico: true });
+ruta("POST", /^\/api\/publico\/([\w-]+)\/reservas\/([\w-]+)\/calificar$/, (req, res, p, cuerpo, url) => {
+  util.limitar(req, "cita-cliente", 20, 60000);
+  const b = barberiaDeLaCita(p, url);
+  const estrellas = Number(cuerpo.estrellas);
+  if (!Number.isInteger(estrellas) || estrellas < 1 || estrellas > 5) throw new ErrorHTTP(400, "Elegí de 1 a 5 estrellas.");
+  nucleo.transaccion(b.id, (BS) => {
+    const c = BS.cita(p[2]);
+    if (!c) throw new ErrorHTTP(404, "No encontramos esa reserva.");
+    if (c.calificacion) throw new ErrorHTTP(409, "Ya calificaste esta visita. ¡Gracias!");
+    if (!BS.puedeCalificar(c)) throw new ErrorHTTP(409, "Podés calificar cuando termine tu turno.");
+    BS.calificarCita(c.id, estrellas, String(cuerpo.comentario || "").slice(0, 280));
+  });
+  cacheExplorar.t = 0; // la calificación cambia el buscador
+  return citaPublica(b.id, p[2]);
+}, { cuerpo: true, publico: true });
 
 function posicionFila(barberiaId, filaId) {
   return nucleo.leer(barberiaId, (BS) => {

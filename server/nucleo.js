@@ -10,6 +10,9 @@ require("../assets/js/engine.js");
 require("../assets/js/asistente-core.js");
 const BS = globalThis.BS;
 const emitOriginal = BS.emit;
+// En el servidor, los links que van en los mensajes son los de verdad (no el ejemplo del navegador)
+BS.linkReservas = function () { return config.urlPublica + "/reserva/?b=" + encodeURIComponent(BS.get().shop.slug); };
+BS.linkFila = function () { return BS.linkReservas() + "&modo=fila"; };
 let _motor = null;
 function motor() { return _motor || (_motor = require("./motor")); }
 
@@ -36,10 +39,11 @@ function slugLibre(slug, excluirId) {
   const f = uno("SELECT id FROM barberias WHERE slug = ?", slug);
   return !f || f.id === excluirId;
 }
+const SLUGS_RESERVADOS = new Set(["explorar", "app", "reserva", "api", "assets", "webhooks", "pago-simulado"]);
 function slugUnico(nombre) {
   const base = slugDe(nombre);
   let slug = base, n = 2;
-  while (!slugLibre(slug)) slug = base + "-" + n++;
+  while (!slugLibre(slug) || SLUGS_RESERVADOS.has(slug)) slug = base + "-" + n++;
   return slug;
 }
 
@@ -181,8 +185,10 @@ function estadoPublico(est) {
       nombre: s.nombre, slug: s.slug, barrio: s.barrio, ciudad: s.ciudad, direccion: s.direccion, horario: s.horario,
       anticipo: s.anticipo, medios: s.medios, rating: s.rating, resenas: s.resenas, tono: s.tono
     },
+    ejemplo: !!est.ejemplo,
+    reputacion: BS.reputacion(null, est),
     servicios: est.servicios,
-    barberos: est.barberos.map((b) => ({ id: b.id, nombre: b.nombre, alias: b.alias, especialidades: b.especialidades, rating: b.rating, rol: b.rol, modo: b.modo })),
+    barberos: est.barberos.map((b) => ({ id: b.id, nombre: b.nombre, alias: b.alias, especialidades: b.especialidades, rating: b.rating, rol: b.rol, modo: b.modo, reputacion: BS.reputacion(b.id, est) })),
     ocupacion: est.citas.filter((c) => BS.citaActiva(c) && new Date(c.inicio) >= hoy).map((c) => ({ barbero: c.barbero, inicio: c.inicio, dur: c.dur })),
     fila: est.fila.map((f) => ({ id: f.id, entro: f.entro, estado: f.estado, servicio: f.servicio, nombre: BS.util.primerNombre(f.nombre) })),
     autos: est.autos.filter((a) => a.clave === "confirmacion" || a.clave === "fila").map((a) => ({ id: a.id, clave: a.clave, activa: a.activa, plantilla: a.plantilla, nombre: a.nombre, stats: { enviados: 0, resultados: 0, plata: 0 } }))

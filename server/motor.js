@@ -57,7 +57,7 @@ function varsCliente(BS, cli, extra) {
 function manejar(BS, ctx, e) {
   const d = e.d || {};
   try {
-    if (e.ev === "cita.creada" && d.cita) confirmar(BS, ctx, d.cita);
+    if ((e.ev === "cita.creada" || e.ev === "cita.movida") && d.cita) confirmar(BS, ctx, d.cita);
     if (e.ev === "cita.cancelada" && d.cita) listaEspera(BS, ctx, d.cita);
     if (e.ev === "cita.noshow" && d.cita) antiplanton(BS, ctx, d.cita);
     if (e.ev === "cita.terminada" && d.cita) resena(BS, ctx, d.cita);
@@ -128,12 +128,16 @@ function antiplanton(BS, ctx, cita) {
     texto: (monto ? "Anticipo de " + U.pesos(monto) + " retenido · " : "") + U.nombreCorto(cli ? cli.nombre : "Cliente") + " no llegó" + (t ? " · le escribimos para reagendar" : "") });
 }
 
+function linkCalificar(BS, cita) {
+  const { firmar } = require("./db");
+  return BS.linkReservas() + "&cita=" + encodeURIComponent(cita.id) + "&t=" + encodeURIComponent(firmar(cita.id)) + "&calificar=1";
+}
 function resena(BS, ctx, cita) {
   const a = prendida(BS, "resena");
   if (!a) return;
   const U = BS.util, cli = BS.cliente(cita.cliente), t = telPromo(cli);
   if (!t) return;
-  const link = BS.get().shop.linkResena || BS.linkReservas();
+  const link = BS.get().shop.linkResena || linkCalificar(BS, cita);
   const cuando = new Date(Date.now() + (Number(a.espera) || 120) * 60000);
   const texto = BS.render(a.plantilla, Object.assign(BS.varsCita(cita), { link }));
   wa.encolar(ctx.barberiaId, t, { texto, plantilla: armar("resena", { nombre: U.primerNombre(cli.nombre), barberia: BS.get().shop.nombre, link }) }, { auto: a.id, enviarDesde: cuando.toISOString() });
@@ -209,8 +213,8 @@ function pendientes(BS, barberiaId, ahora) {
     st.citas.forEach((c) => {
       if (c.estado !== "confirmada" && c.estado !== "pendiente") return;
       const falta = new Date(c.inicio) - ahora;
-      if (falta > 23.5 * 3600000 && falta <= 24.5 * 3600000 && !hecha("rec24:" + c.id)) out.push({ tipo: "recordatorio", cita: c.id, cual: 24 });
-      if (falta > 1.5 * 3600000 && falta <= 2.5 * 3600000 && !hecha("rec2:" + c.id)) out.push({ tipo: "recordatorio", cita: c.id, cual: 2 });
+      if (falta > 23.5 * 3600000 && falta <= 24.5 * 3600000 && !hecha("rec24:" + c.id + ":" + c.inicio)) out.push({ tipo: "recordatorio", cita: c.id, cual: 24 });
+      if (falta > 1.5 * 3600000 && falta <= 2.5 * 3600000 && !hecha("rec2:" + c.id + ":" + c.inicio)) out.push({ tipo: "recordatorio", cita: c.id, cual: 2 });
     });
   }
   const diaria = (clave, desde) => { if (prendida(BS, clave) && min >= desde && !hecha(clave + ":" + barberiaId + ":" + dia)) out.push({ tipo: clave }); };
@@ -236,7 +240,7 @@ function ejecutarTarea(BS, ctx, t, forzado) {
     let n = 0;
     citas.forEach((c) => {
       if (!c) return;
-      if (t.cita && !forzado && !tareaNueva("rec" + t.cual + ":" + c.id, ctx.barberiaId)) return;
+      if (t.cita && !forzado && !tareaNueva("rec" + t.cual + ":" + c.id + ":" + c.inicio, ctx.barberiaId)) return;
       const cli = BS.cliente(c.cliente), tl = tel(cli);
       c.recordatorio = true;
       if (!tl) return;

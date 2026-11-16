@@ -141,7 +141,7 @@
     return {
       v: 0, shop: p.shop, servicios: p.servicios, barberos: p.barberos, clientes: [],
       citas: p.ocupacion.map(function (o, i) { return { id: "o" + i, cliente: null, barbero: o.barbero, servicio: null, inicio: o.inicio, dur: o.dur, estado: "confirmada" }; }),
-      fila: p.fila, autos: p.autos, actividad: [], pagos: [], ajustes: {}
+      fila: p.fila, autos: p.autos, actividad: [], pagos: [], ajustes: {}, reputacion: p.reputacion, ejemplo: !!p.ejemplo
     };
   }
   function cargarPublico() {
@@ -170,6 +170,10 @@
   }
   C.recargarPublico = cargarPublico;
   C.reservar = function (datos) { return C.post("publico/" + encodeURIComponent(C.slug) + "/reservas", datos); };
+  function rutaCita(id, token, accion) { return "publico/" + encodeURIComponent(C.slug) + "/reservas/" + encodeURIComponent(id) + "/" + accion + "?t=" + encodeURIComponent(token); }
+  C.cancelarReserva = function (id, token) { return C.post(rutaCita(id, token, "cancelar"), {}); };
+  C.cambiarReserva = function (id, token, datos) { return C.post(rutaCita(id, token, "cambiar"), datos); };
+  C.calificarReserva = function (id, token, datos) { return C.post(rutaCita(id, token, "calificar"), datos); };
   C.estadoReserva = function (id, token) { return C.get("publico/" + encodeURIComponent(C.slug) + "/reservas/" + encodeURIComponent(id) + "?t=" + encodeURIComponent(token)); };
   C.unirseFila = function (datos) { return C.post("publico/" + encodeURIComponent(C.slug) + "/fila", datos); };
   C.estadoFila = function (id, token) { return C.get("publico/" + encodeURIComponent(C.slug) + "/fila/" + encodeURIComponent(id) + "?t=" + encodeURIComponent(token)); };

@@ -72,6 +72,7 @@
   var RUTAS = [
     { id: "hoy", txt: "Hoy", ico: "inicio", grupo: "Día a día" },
     { id: "agenda", txt: "Agenda", ico: "cal", grupo: "Día a día" },
+    { id: "silla", txt: "Mi silla", ico: "tijeras", grupo: "Día a día" },
     { id: "fila", txt: "Fila virtual", ico: "fila", grupo: "Día a día" },
     { id: "automatizaciones", txt: "Automatizaciones", ico: "rayo", grupo: "Piloto automático", corto: "Auto" },
     { id: "asistente", txt: "Asistente WhatsApp", ico: "chat", grupo: "Piloto automático" },
@@ -79,7 +80,8 @@
     { id: "caja", txt: "Caja y pagos", ico: "plata", grupo: "Negocio" },
     { id: "ajustes", txt: "Ajustes", ico: "ajustes", grupo: "Negocio" }
   ];
-  var TABBAR = [["hoy", "Hoy", "inicio"], ["agenda", "Agenda", "cal"], ["fila", "Fila", "fila"], ["automatizaciones", "Auto", "rayo"], ["mas", "Más", "menu"]];
+  // En el celular: lo del día a día abajo; automatizaciones y lo demás en «Más»
+  var TABBAR = [["hoy", "Hoy", "inicio"], ["agenda", "Agenda", "cal"], ["silla", "Mi silla", "tijeras"], ["fila", "Fila", "fila"], ["mas", "Más", "menu"]];
   IC.menu = '<path d="M4 7h16M4 12h16M4 17h16"/>';
 
   var ui = {
@@ -140,7 +142,7 @@
     });
     $("[data-nav]").innerHTML = html;
     $("[data-tabbar]").innerHTML = TABBAR.map(function (t) {
-      var on = t[0] === ruta || (t[0] === "mas" && ["asistente", "clientes", "caja", "ajustes", "mas"].indexOf(ruta) >= 0);
+      var on = t[0] === ruta || (t[0] === "mas" && ["automatizaciones", "asistente", "clientes", "caja", "ajustes", "mas"].indexOf(ruta) >= 0);
       return '<a href="#/' + t[0] + '"' + (on ? ' class="is-activo" aria-current="page"' : "") + ">" + ico(t[2]) + t[1] + (t[0] === "fila" && fila ? '<span class="badge">' + fila + "</span>" : "") + "</a>";
     }).join("");
     $("[data-shop-nombre]").textContent = st.shop.nombre;
@@ -250,7 +252,9 @@
         '<p class="saludo-sub">' + (abierto ? "Hoy tenés <b>" + citasHoy.length + " citas</b>, <b>" + fila.length + " en la fila</b> y" : "La barbería está cerrada ahora. Mientras tanto,") +
         " tus automatizaciones llevan <b>" + U.pesos(recuperado) + "</b> recuperados esta semana.</p></div>" +
         '<div class="chips"><button class="btn btn--suave btn--sm" data-accion="ir" data-ruta="asistente">' + ico("chat") + "Probar el asistente</button></div></div>";
-      if (APP.mostrarCompartir && APP.mostrarCompartir()) html += APP.compartirHTML({ compacta: true });
+      // Barbería nueva: primeros pasos guiados; cuando ya los hizo (o los ocultó), solo el link si aún no hay reservas
+      var pasosHTML = primerosPasos();
+      html += pasosHTML || (APP.mostrarCompartir && APP.mostrarCompartir() ? APP.compartirHTML({ compacta: true }) : "");
 
       // KPIs
       html += '<section class="kpis" aria-label="Resumen de hoy">' +
@@ -396,6 +400,107 @@
       el.addEventListener("blur", function () { tip.classList.remove("is-on"); });
     });
   }
+
+  /* ==========================================================================
+     PRIMEROS PASOS (barbería nueva)
+     ========================================================================== */
+  /** Marca un paso como hecho (se guarda en ajustes, que también viaja al servidor). */
+  APP.marcarPaso = function (clave) {
+    var st = BS.get();
+    if (!st || BS.esEjemplo() || (st.ajustes && st.ajustes[clave])) return;
+    st.ajustes = st.ajustes || {}; st.ajustes[clave] = true;
+    BS.commit("ajustes");
+  };
+  function primerosPasos() {
+    var st = BS.get(), aj = st.ajustes || {};
+    if (BS.esEjemplo() || aj.pasosOcultos) return "";
+    var reservas = st.citas.some(function (c) { return c.fuente === "web" || (enServidor() && c.fuente === "whatsapp"); });
+    var it = enServidor() && BS.conexion.sesion ? BS.conexion.sesion.integraciones || {} : {};
+    var link = enServidor() ? BS.linkReservas() : reservaDemo();
+    var pasos = [
+      { ok: true, t: "Creaste tu barbería", d: "Horario, servicios con precios y equipo listos." },
+      { ok: !!aj.vioReservas || reservas, t: "Mirá tu página como la ve el cliente", d: "Reservá un turno de prueba: cae aquí en tu agenda.",
+        b: '<a class="btn btn--suave btn--sm" href="' + esc(link) + '" target="_blank" rel="noopener">' + ico("externo") + "Abrir mi página</a>" },
+      { ok: !!aj.compartio, t: "Mandales el link a tus clientes", d: "Estados de WhatsApp, bio de Instagram y tus clientes de siempre.",
+        b: '<button class="btn btn--sm" data-cp="' + (enServidor() ? "compartir" : "copiar") + '">' + ico(enServidor() ? "enviar" : "copiar") + (enServidor() ? "Compartir" : "Copiar mensaje") + "</button>" },
+      { ok: !!aj.proboAsistente, t: "Probá el asistente de WhatsApp", d: "Escribile como si fueras un cliente: agenda y cobra solo.",
+        b: '<a class="btn btn--suave btn--sm" href="#/asistente">' + ico("chat") + "Probar</a>" },
+      enServidor() ? { ok: it.whatsapp === "meta" && it.pagos === "wompi", t: "Conectá WhatsApp y los pagos", d: "Para que los mensajes y los anticipos sean de verdad.",
+        b: '<a class="btn btn--suave btn--sm" href="#/ajustes">' + ico("ajustes") + "Conectar</a>" } : null,
+      { ok: reservas, t: "Recibí tu primera reserva", d: "Se marca sola cuando un cliente reserva por tu link." }
+    ].filter(Boolean);
+    var hechos = pasos.filter(function (p) { return p.ok; }).length;
+    if (hechos === pasos.length) return "";
+    return '<section class="card pasos" aria-label="Primeros pasos"><div class="card-cab"><div><h2>Primeros pasos</h2><p>' + hechos + " de " + pasos.length + " · así arrancás a recibir reservas</p></div>" +
+      '<button class="btn-ico" data-accion="pasos-ocultar" aria-label="Ocultar primeros pasos" title="Ocultar">' + ico("x") + "</button></div>" +
+      '<div class="pasos-barra" aria-hidden="true"><span class="poste is-on" style="width:' + Math.round((hechos / pasos.length) * 100) + '%"></span></div>' +
+      '<ol class="pasos-lista">' + pasos.map(function (p) {
+        return '<li class="' + (p.ok ? "is-hecho" : "") + '"><i aria-hidden="true">' + (p.ok ? ico("check") : "") + "</i><div><b>" + p.t + "</b><small>" + p.d + "</small></div>" + (!p.ok && p.b ? p.b : "") + "</li>";
+      }).join("") + "</ol></section>";
+  }
+
+  /* ==========================================================================
+     VISTA: MI SILLA (lo del barbero, sin enredos: quién sigue y botones grandes)
+     ========================================================================== */
+  var KEY_MI_BARBERO = "barbersaas.miBarbero";
+  function miBarbero() {
+    var st = BS.get(), id = null;
+    try { id = localStorage.getItem(KEY_MI_BARBERO); } catch (e) { id = null; }
+    return (id && BS.barbero(id)) || st.barberos.filter(function (x) { return x.modo !== "dueno"; })[0] || st.barberos[0] || null;
+  }
+  function fichaHTML(cli) {
+    return cli && cli.ficha ? '<div class="silla-ficha">' + ico("tijeras") + "<div><b>Ficha de corte</b>" + esc(cli.ficha) + "</div></div>" : "";
+  }
+  APP.vistas.silla = {
+    titulo: "Mi silla",
+    sub: function () { var b = miBarbero(); return b ? "Lo de " + b.nombre + " hoy · quién sigue y cuánto llevás" : "Lo tuyo de hoy"; },
+    html: function () {
+      var st = BS.get(), b = miBarbero();
+      if (!b) return '<div class="card vacio"><b>Todavía no hay barberos</b>Agregalos en Ajustes, en «Tu equipo».</div>';
+      var ahora = new Date();
+      var citas = BS.citasDelDia(ahora, b.id).filter(BS.citaActiva);
+      var actual = citas.filter(function (c) { return c.estado === "en-silla"; })[0];
+      var pendientes = citas.filter(function (c) { return (c.estado === "confirmada" || c.estado === "pendiente") && BS.finCita(c) > ahora; });
+      var siguiente = actual ? null : pendientes[0];
+      var fila = BS.filaOrdenada();
+      var hechas = citas.filter(function (c) { return c.estado === "terminada"; });
+      var vendido = hechas.reduce(function (s, c) { return s + c.precio; }, 0);
+      var propinas = hechas.reduce(function (s, c) { return s + ((c.pago && c.pago.propina) || 0); }, 0);
+      var suyo = b.modo === "porcentaje" ? Math.round(vendido * b.comision) : vendido;
+      var rep = BS.reputacion(b.id);
+      var html = st.barberos.length > 1 ? '<div class="chips silla-quien" role="group" aria-label="¿Quién sos?">' + st.barberos.map(function (x) {
+        return '<button class="chip' + (x.id === b.id ? " is-on" : "") + '" data-accion="silla-barbero" data-id="' + x.id + '" aria-pressed="' + (x.id === b.id) + '">' + avatar(x.nombre) + esc(x.nombre) + "</button>";
+      }).join("") + "</div>" : "";
+      if (actual) {
+        var cli = BS.cliente(actual.cliente), srv = BS.servicio(actual.servicio);
+        var lleva = Math.max(0, Math.round((ahora - new Date(actual.inicio)) / 60000));
+        html += '<section class="card silla-ahora"><p class="k">Ahora en tu silla</p><h2>' + esc(cli ? cli.nombre : "Cliente") + '</h2><p class="silla-sub">' + esc(srv ? srv.nombre : "Servicio") +
+          " · lleva " + lleva + " min · termina " + U.hora(BS.finCita(actual)) + "</p>" + fichaHTML(cli) +
+          '<button class="btn btn--lg silla-btn" data-accion="cita-cobrar" data-id="' + actual.id + '">' + ico("plata") + "Terminar y cobrar " + U.pesos(actual.precio) + "</button></section>";
+      } else if (siguiente) {
+        var cs = BS.cliente(siguiente.cliente), ss = BS.servicio(siguiente.servicio);
+        var mins = Math.round((new Date(siguiente.inicio) - ahora) / 60000);
+        html += '<section class="card silla-ahora silla-ahora--sig"><p class="k">Tu siguiente cliente</p><h2>' + esc(cs ? cs.nombre : "Cliente") + '</h2><p class="silla-sub">' + esc(ss ? ss.nombre : "Servicio") + " · " +
+          (mins > 0 ? (mins < 90 ? "en " + mins + " min" : "a las " + U.hora(siguiente.inicio)) : "ya debería estar aquí") + (siguiente.estado === "pendiente" ? " · falta el anticipo" : "") + "</p>" + fichaHTML(cs) +
+          '<div class="silla-acc"><button class="btn btn--lg silla-btn" data-accion="cita-llego" data-id="' + siguiente.id + '">' + ico("check") + "Llegó: a la silla</button>" +
+          (mins <= 0 ? '<button class="btn btn--ghost btn--lg" data-accion="cita-noshow" data-id="' + siguiente.id + '">No vino</button>' : "") + "</div></section>";
+      } else {
+        html += '<section class="card silla-ahora silla-ahora--libre"><p class="k">Silla libre</p><h2>' + (fila.length ? (fila.length === 1 ? "Hay 1 persona en la fila" : "Hay " + fila.length + " en la fila") : "No tenés más citas por hoy") + '</h2><p class="silla-sub">' +
+          (fila.length ? "Pasá al siguiente con un toque: le avisamos por WhatsApp." : "Cuando entre una reserva o alguien haga fila, aparece aquí.") + "</p></section>";
+      }
+      if (!actual && fila.length) html += '<button class="btn btn--suave btn--lg silla-fila" data-accion="fila-silla" data-id="' + fila[0].id + '" data-barbero="' + b.id + '">' + ico("fila") + "Pasar a " + esc(U.primerNombre(fila[0].nombre)) + " de la fila</button>";
+      var despues = pendientes.filter(function (c) { return c !== siguiente; });
+      html += '<section class="card"><div class="card-cab"><div><h2>Después</h2><p>' + (despues.length ? despues.length + (despues.length === 1 ? " cita más hoy" : " citas más hoy") : "Nada más por hoy") + "</p></div></div>" +
+        (despues.length ? '<div class="lista-citas">' + despues.map(filaCita).join("") + "</div>" : '<div class="vacio"><b>Agenda despejada</b>Las reservas nuevas aparecen solas.</div>') + "</section>";
+      html += '<section class="kpis silla-kpis" aria-label="Tu día">' +
+        '<div class="card kpi"><span class="kpi-k">' + ico("tijeras") + 'Cortes hoy</span><b class="kpi-v">' + hechas.length + "</b></div>" +
+        '<div class="card kpi"><span class="kpi-k">' + ico("plata") + 'Vendido hoy</span><b class="kpi-v">' + U.pesos(vendido) + "</b></div>" +
+        '<div class="card kpi"><span class="kpi-k">' + ico("caja") + (b.modo === "porcentaje" ? "Te toca (" + Math.round(b.comision * 100) + " %) + propinas" : b.modo === "alquiler" ? "Tuyo + propinas (el alquiler va aparte)" : "Tuyo + propinas") + '</span><b class="kpi-v">' + U.pesos(suyo + propinas) + "</b></div>" +
+        '<div class="card kpi"><span class="kpi-k">' + ico("estrella") + 'Tu calificación</span><b class="kpi-v">' + (rep.total || rep.ejemplo ? String(rep.promedio).replace(".", ",") + " ★" : "—") + '</b><span class="kpi-d">' +
+        (rep.ejemplo ? "Dato de ejemplo" : rep.total ? rep.total + (rep.total === 1 ? " calificación de clientes" : " calificaciones de clientes") : "Todavía sin calificaciones") + "</span></div></section>";
+      return html;
+    }
+  };
 
   /* ==========================================================================
      VISTA: AGENDA
@@ -968,7 +1073,13 @@
     sub: function () { return "Tu barbería, tus servicios y cómo cobrás"; },
     html: function () {
       var st = BS.get(), s = st.shop;
-      var html = '<div class="ajustes-grid"><section class="card"><div class="card-cab"><div><h2>Tu link de reservas</h2><p>Mandáselo a tus clientes: reservan solos y cae en tu agenda</p></div></div>' + APP.compartirHTML() + '</section><section class="card"><div class="card-cab"><h2>Tu barbería</h2></div><div class="form" data-form-shop>' +
+      var html = '<div class="ajustes-grid"><section class="card"><div class="card-cab"><div><h2>Tu link de reservas</h2><p>Mandáselo a tus clientes: reservan solos y cae en tu agenda</p></div></div>' + APP.compartirHTML() + "</section>" +
+        '<section class="card"><div class="card-cab"><div><h2>Clientes nuevos</h2><p>Explorar es el buscador de barberías de Barber SaaS</p></div></div>' +
+        '<div class="interruptor-fila"><span><b>Aparecer en Explorar</b><small>Quien busca barbería ve tus turnos libres, tus precios y tu calificación. Lo que reserva cae en tu agenda.</small></span>' +
+        '<label class="switch"><input type="checkbox" data-accion="aj-explorar"' + (s.enExplorar ? " checked" : "") + ' aria-label="Aparecer en Explorar"><span></span></label></div>' +
+        '<div class="chips" style="margin-top:12px"><a class="btn btn--suave btn--sm" href="../explorar/" target="_blank" rel="noopener">' + ico("externo") + "Ver Explorar</a>" +
+        (st.ajustes.pasosOcultos ? '<button class="btn btn--ghost btn--sm" data-accion="pasos-mostrar">' + ico("check") + "Ver primeros pasos</button>" : "") + "</div></section>" +
+        '<section class="card"><div class="card-cab"><h2>Tu barbería</h2></div><div class="form" data-form-shop>' +
         '<div class="campo"><label for="aj-nombre">Nombre</label><input class="input" id="aj-nombre" name="nombre" value="' + esc(s.nombre) + '"></div>' +
         '<div class="form-fila"><div class="campo"><label for="aj-barrio">Barrio o municipio</label><select class="input" id="aj-barrio" name="barrio">' + BARRIOS.map(function (b) { return "<option" + (b === s.barrio ? " selected" : "") + ">" + b + "</option>"; }).join("") + "</select></div>" +
         '<div class="campo"><label for="aj-dueno">Tu nombre</label><input class="input" id="aj-dueno" name="dueno" value="' + esc(s.dueno) + '"></div></div>' +
@@ -1025,7 +1136,7 @@
     titulo: "Más",
     sub: function () { return BS.get().shop.nombre; },
     html: function () {
-      return '<div class="mas-lista">' + RUTAS.filter(function (r) { return ["hoy", "agenda", "fila", "automatizaciones"].indexOf(r.id) < 0; }).map(function (r) {
+      return '<div class="mas-lista">' + RUTAS.filter(function (r) { return ["hoy", "agenda", "silla", "fila"].indexOf(r.id) < 0; }).map(function (r) {
         return '<a href="#/' + r.id + '">' + ico(r.ico) + r.txt + "</a>";
       }).join("") + '<a href="' + (enServidor() ? esc(BS.linkReservas()) : reservaDemo()) + '" target="_blank" rel="noopener">' + ico("web") + "Página de reservas<small>Así reservan tus clientes</small></a>" +
         (enServidor() ? '<button type="button" data-accion="salir">' + ico("flecha") + "Cerrar sesión<small>En este dispositivo</small></button>" : "") +
@@ -1106,6 +1217,9 @@
       case "toggle-vivo": BS.ajuste("demoVivo", !BS.get().ajustes.demoVivo); APP.toastSimple(BS.get().ajustes.demoVivo ? "Demo en vivo prendida: van a llegar reservas y gente a la fila." : "Demo en vivo apagada. Todo queda quieto para que pruebes a mano.", "rayo", "Demo"); break;
       case "nueva-cita": abrirNuevaCita({}); break;
       case "ver-cita": abrirCita(id); break;
+      case "silla-barbero": try { localStorage.setItem(KEY_MI_BARBERO, id); } catch (err) { /* sin almacenamiento */ } render(true); break;
+      case "pasos-mostrar": BS.get().ajustes.pasosOcultos = false; BS.commit("ajustes"); APP.ir("hoy"); break;
+      case "pasos-ocultar": BS.get().ajustes.pasosOcultos = true; BS.commit("ajustes"); render(true); APP.toastSimple("Listo. Los volvés a ver desde Ajustes cuando querás.", "check", "Primeros pasos"); break;
       case "ver-cliente": abrirCliente(id); break;
       case "feed-ver": ui.feedAbierto[id] = !ui.feedAbierto[id]; render(true); break;
       case "graf-tabla": ui.grafTabla = !ui.grafTabla; render(true); break;
@@ -1324,6 +1438,7 @@
 
   function enlazarEventos() {
     document.addEventListener("click", function (e) {
+      if (e.target.closest('a[href*="reserva/"]')) APP.marcarPaso("vioReservas"); // primeros pasos: ya miró su página
       var el = e.target.closest("[data-accion]");
       if (!el) return;
       if (el.tagName === "INPUT") return; // los switches van por «change»
@@ -1344,6 +1459,11 @@
       if (a === "aj-anticipo") { BS.get().shop.anticipo.activo = el.checked; BS.commit("shop"); return; }
       if (a === "aj-medio") { BS.get().shop.medios[el.getAttribute("data-m")] = el.checked; BS.commit("shop"); return; }
       if (a === "aj-vivo") { BS.ajuste("demoVivo", el.checked); return; }
+      if (a === "aj-explorar") {
+        BS.get().shop.enExplorar = el.checked; BS.commit("shop");
+        APP.toastSimple(el.checked ? "Tu barbería aparece en Explorar: clientes nuevos te pueden encontrar." : "Tu barbería ya no aparece en Explorar. Tu link sigue funcionando igual.", "web", "Explorar");
+        return;
+      }
       if (a === "aj-anticipo-valor") {
         var an = BS.get().shop.anticipo, v = Math.max(0, Number(el.value) || 0);
         if (an.tipo === "fijo") an.valor = v; else an.porcentaje = Math.min(100, v);

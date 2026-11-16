@@ -13,6 +13,9 @@ Plataforma de automatización para barberías de Medellín: la agenda se llena s
 - **Lista de espera relámpago.** Si alguien cancela, el turno se ofrece de inmediato.
 - **Huecos libres, cumpleaños y clientes dormidos.** Mensajes que traen de vuelta a los clientes.
 - **Caja y liquidación de barberos.** Cada peso queda unido a su cita, y cada automatización muestra cuánta plata recuperó.
+- **El cliente maneja su cita.** Desde su link cambia la hora, cancela (hasta 2 horas antes), califica su corte y repite "lo de siempre" con un toque.
+- **Mi silla.** Vista simple para cada barbero: quién está en la silla, quién sigue, botones grandes y cuánto lleva ganado en el día.
+- **Explorar.** Buscador de barberías con turnos en vivo, precios y calificaciones de clientes reales: el cliente toca la hora y reserva (motor de reservas).
 
 ## Cómo está hecho
 
