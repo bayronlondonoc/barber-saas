@@ -522,3 +522,10 @@ details[open] .faq-mas::after { transform: translate(-50%, -50%) rotate(0deg); }
   .flota--caja { right: 0; bottom: -4px; }
   .pie-legal { flex-direction: column; }
 }
+
+/* Menú con «Buscar barbería»: nunca partir un enlace en dos líneas; en pantallas medianas, más compacto */
+.nav-links a { white-space: nowrap; }
+@media (min-width: 961px) and (max-width: 1279px) {
+  .nav-links { gap: 20px; font-size: 14px; }
+  .nav-links a[href="#sabado"] { display: none; }
+}
